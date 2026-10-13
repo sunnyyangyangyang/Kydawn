@@ -48,10 +48,11 @@ jobs:
           }
           New-Item -ItemType Directory -Force -Path "third_party" | Out-Null
           Invoke-WebRequest -Uri "$base/WebPSharp.0.5.1.nupkg" -OutFile "third_party/WebPSharp.0.5.1.nupkg"
-      - name: NuGet restore
+      - name: NuGet restore (official nuget.exe)
         shell: pwsh
-        working-directory: src
-        run: nuget restore DownKyi.sln
+        run: |
+          Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "nuget.exe"
+          ./nuget.exe restore src/DownKyi.sln
       - name: Build (dotnet, Release x64)
         shell: pwsh
         run: dotnet build src/DownKyi.sln -c Release /p:Platform=x64 /v:minimal
