@@ -48,11 +48,23 @@ jobs:
           }
           New-Item -ItemType Directory -Force -Path "third_party" | Out-Null
           Invoke-WebRequest -Uri "$base/WebPSharp.0.5.1.nupkg" -OutFile "third_party/WebPSharp.0.5.1.nupkg"
+      - name: Fetch .NET Framework reference pack
+        shell: pwsh
+        run: |
+          $dir = "tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/microsoft.netframework.referenceassemblies.net472/1.0.3/microsoft.netframework.referenceassemblies.net472.1.0.3.nupkg" -OutFile "refpack.zip"
+          Expand-Archive -Path "refpack.zip" -DestinationPath $dir -Force
+          Remove-Item "refpack.zip"
+          if (-not (Test-Path "$dir/build/.NETFramework/v4.7.2/mscorlib.dll")) { throw "reference pack missing mscorlib.dll" }
+          Write-Host "refpack ready"
       - name: NuGet restore (official nuget.exe)
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "nuget.exe"
-          ./nuget.exe restore src/DownKyi.sln
+          Push-Location src
+          ../nuget.exe restore DownKyi.sln
+          Pop-Location
       - name: Build (dotnet, Release x64)
         shell: pwsh
         run: dotnet build src/DownKyi.sln -c Release /p:Platform=x64 /v:minimal
@@ -77,7 +89,7 @@ jobs:
       - name: Install mono + packagers
         run: |
           sudo apt-get update
-          sudo apt-get install -y mono-complete rpm dpkg-dev fakeroot
+          sudo apt-get install -y mono-complete rpm dpkg-dev fakeroot unzip
       - name: Fetch build tools
         run: |
           base="https://github.com/$GITHUB_REPOSITORY/releases/download/$TOOLS_RELEASE"
@@ -86,6 +98,13 @@ jobs:
             curl -sSL "$base/$f" -o "src/DownKyi.Core/$f"
           done
           curl -sSL "$base/WebPSharp.0.5.1.nupkg" -o "third_party/WebPSharp.0.5.1.nupkg"
+      - name: Fetch .NET Framework reference pack
+        run: |
+          mkdir -p tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3
+          curl -sSL -o /tmp/refpack.nupkg "https://api.nuget.org/v3-flatcontainer/microsoft.netframework.referenceassemblies.net472/1.0.3/microsoft.netframework.referenceassemblies.net472.1.0.3.nupkg"
+          unzip -q -o /tmp/refpack.nupkg -d tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/
+          test -f tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/mscorlib.dll
+          echo "refpack ready"
       - name: Install nuget (official bootstrap, runs under mono)
         run: |
           curl -sSL -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
@@ -110,29 +129,33 @@ jobs:
       - name: Package .deb
         run: |
           v="${{ needs.version.outputs.version }}"
+          core="${v#v}"
+          case "$core" in [0-9]*) ;; *) core="0.0.0-$core" ;; esac
           d="debian/kydawn"
           mkdir -p "$d/DEBIAN" "$d/usr/share/kydawn" "$d/usr/bin"
           cp -r linuxbundle/. "$d/usr/share/kydawn/"
           ln -sf /usr/share/kydawn/run.sh "$d/usr/bin/kydawn"
           cat > "$d/DEBIAN/control" <<CTL
           Package: kydawn
-          Version: ${v#v}
+          Version: $core
           Section: utils
           Architecture: amd64
           Maintainer: kydawn
           Description: Kydawn Bilibili downloader (Linux/Mono)
           Depends: mono-runtime, libmono-wpf4.5-cil
           CTL
-          dpkg-deb --build --root-owner-group "$d" "kydawn-${v#v}-amd64.deb"
+          dpkg-deb --build --root-owner-group "$d" "kydawn-${core}-amd64.deb"
       - name: Package .rpm
         run: |
           v="${{ needs.version.outputs.version }}"
+          core="${v#v}"
+          case "$core" in [0-9]*) ;; *) core="0.0.0$core" ;; esac
           r="root/rpmbuild"
           mkdir -p "$r"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
           cp -r linuxbundle "$r/SOURCES/app"
           cat > "$r/SPECS/kydawn.spec" <<SPEC
           Name: kydawn
-          Version: ${v#v}
+          Version: $core
           Release: 1%{?dist}
           Summary: Kydawn Bilibili downloader (Linux/Mono)
           License: MIT
@@ -181,6 +204,7 @@ jobs:
         run: |
           v="${{ needs.version.outputs.version }}"
           ver="${v#v}"
+          case "$ver" in [0-9]*) ;; *) ver="0.0.0$ver" ;; esac
           mkdir -p arch
           cat > arch/PKGBUILD <<PKG
           pkgname=kydawn

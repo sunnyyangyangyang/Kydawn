@@ -637,6 +637,7 @@
   </ItemGroup>
   <ItemGroup />
     <PropertyGroup>
+    <TargetFrameworkDirectory Condition="'$(TargetFrameworkDirectory)'=='' and Exists('../../tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/mscorlib.dll')">../../tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/</TargetFrameworkDirectory>
     <TargetFrameworkDirectory Condition="'$(TargetFrameworkDirectory)'=='' and Exists('$(NuGetPackageRoot)microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/mscorlib.dll')">$(NuGetPackageRoot)microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/</TargetFrameworkDirectory>
   </PropertyGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.WinFX.targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.WinFX.targets')"/>
