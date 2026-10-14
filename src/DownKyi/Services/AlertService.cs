@@ -31,12 +31,13 @@ namespace DownKyi.Services
         /// 显示一个警告弹窗
         /// </summary>
         /// <param name="message"></param>
+        /// <param name="buttonNumber"></param>
         /// <returns></returns>
-        public ButtonResult ShowWarning(string message)
+        public ButtonResult ShowWarning(string message, int buttonNumber = 1)
         {
             VectorImage image = SystemIcon.Instance().Warning;
             string title = DictionaryResource.GetString("Warning");
-            return ShowMessage(image, title, message, 1);
+            return ShowMessage(image, title, message, buttonNumber);
         }
 
         /// <summary>
@@ -66,10 +67,15 @@ namespace DownKyi.Services
                 { "message", message },
                 { "button_number", buttonNumber }
             };
-            dialogService.ShowDialog(ViewAlertDialogViewModel.Tag, param, buttonResult =>
+
+            App.PropertyChangeAsync(() =>
             {
-                result = buttonResult.Result;
+                dialogService.ShowDialog(ViewAlertDialogViewModel.Tag, param, buttonResult =>
+                {
+                    result = buttonResult.Result;
+                });
             });
+
             return result;
         }
 

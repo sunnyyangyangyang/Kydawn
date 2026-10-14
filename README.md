@@ -1,17 +1,20 @@
-# 哔哩下载姬
+# Kydawn · 哔哩下载姬
+> U0001F343️ **Rebirth / 秽土转生** — 本项目为 [哔哩下载姬](https://github.com/leiurayer/downkyi) 的延续。原仓库因 B 站律师函关停，现于新仓库继续维护。
+> 仅保留全部 PR 及直接关联的 issue;其余历史 issue 已归档至 CSV。
+> _The reborn home of DownKyi (哔哩下载姬)._
 
 <p align="center">
-    <a href="https://github.com/leiurayer/downkyi/stargazers" style="text-decoration:none" >
-        <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/leiurayer/downkyi">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/stargazers" style="text-decoration:none" >
+        <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/sunnyyangyangyang/Kydawn">
     </a>
-    <a href="https://github.com/leiurayer/downkyi/network" style="text-decoration:none" >
-        <img alt="GitHub forks" src="https://img.shields.io/github/forks/leiurayer/downkyi">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/network" style="text-decoration:none" >
+        <img alt="GitHub forks" src="https://img.shields.io/github/forks/sunnyyangyangyang/Kydawn">
     </a>
-    <a href="https://github.com/leiurayer/downkyi/issues" style="text-decoration:none">
-        <img alt="GitHub issues" src="https://img.shields.io/github/issues/leiurayer/downkyi">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/issues" style="text-decoration:none">
+        <img alt="GitHub issues" src="https://img.shields.io/github/issues/sunnyyangyangyang/Kydawn">
     </a>
-    <a href="https://github.com/leiurayer/downkyi/blob/main/LICENSE" style="text-decoration:none" >
-        <img alt="GitHub" src="https://img.shields.io/github/license/leiurayer/downkyi">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/blob/main/LICENSE" style="text-decoration:none" >
+        <img alt="GitHub" src="https://img.shields.io/github/license/sunnyyangyangyang/Kydawn">
     </a>
 </p>
 
@@ -24,14 +27,14 @@
 ## 下载
 
 <p align="left">
-    <a href="https://github.com/leiurayer/downkyi/releases/latest" style="text-decoration:none">
-       <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/leiurayer/downkyi">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/releases/latest" style="text-decoration:none">
+       <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/sunnyyangyangyang/Kydawn">
     </a>
-    <a href="https://github.com/leiurayer/downkyi/releases/latest" style="text-decoration:none">
-       <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/leiurayer/downkyi">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/releases/latest" style="text-decoration:none">
+       <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/sunnyyangyangyang/Kydawn">
     </a>
-    <a href="https://github.com/leiurayer/downkyi/releases" style="text-decoration:none">
-       <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/leiurayer/downkyi/total">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/releases" style="text-decoration:none">
+       <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/sunnyyangyangyang/Kydawn/total">
     </a>
 </p>
 
@@ -43,12 +46,6 @@
 - 内建下载器失败：请提issue，也欢迎pr。
 - 下载时卡在“混流中”：检查ffmpeg.exe是否可以正常工作。
 - 去水印：宽/高为水印的尺寸，X/Y为水印在图像中的位置（以左上角为原点），这四个数据可通过Photoshop获得。
-
-## 赞助
-
-如果这个项目对您有很大帮助，并且您希望支持该项目的开发和维护，请随时扫描一下二维码进行捐赠。非常感谢您的捐款，谢谢！
-
-![Alipay.png](https://s2.loli.net/2022/06/04/6LpfinSa5FoZmNB.png)![WeChat.png](https://s2.loli.net/2022/06/04/2yotOSvwmahPdXU.png)
 
 ## 开发
 
