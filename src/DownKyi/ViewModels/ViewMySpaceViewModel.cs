@@ -11,7 +11,9 @@ using Prism.Commands;
 using Prism.Events;
 using Prism.Regions;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -21,6 +23,8 @@ namespace DownKyi.ViewModels
     public class ViewMySpaceViewModel : BaseViewModel
     {
         public const string Tag = "PageMySpace";
+
+        private CancellationTokenSource tokenSource;
 
         // mid
         private long mid = -1;
@@ -237,6 +241,13 @@ namespace DownKyi.ViewModels
             set => SetProperty(ref packageList, value);
         }
 
+        private int selectedStatus;
+        public int SelectedStatus
+        {
+            get => selectedStatus;
+            set => SetProperty(ref selectedStatus, value);
+        }
+
         private int selectedPackage;
         public int SelectedPackage
         {
@@ -291,6 +302,9 @@ namespace DownKyi.ViewModels
         /// </summary>
         private void ExecuteBackSpace()
         {
+            // 结束任务
+            tokenSource?.Cancel();
+
             NavigationParam parameter = new NavigationParam
             {
                 ViewName = ParentView,
@@ -320,6 +334,47 @@ namespace DownKyi.ViewModels
                 Parameter = "logout"
             };
             eventAggregator.GetEvent<NavigationEvent>().Publish(parameter);
+        }
+
+        // 页面选择事件
+        private DelegateCommand statusListCommand;
+        public DelegateCommand StatusListCommand => statusListCommand ?? (statusListCommand = new DelegateCommand(ExecuteStatusListCommand));
+
+        /// <summary>
+        /// 页面选择事件
+        /// </summary>
+        private void ExecuteStatusListCommand()
+        {
+            if (SelectedStatus == -1)
+            {
+                return;
+            }
+
+            Dictionary<string, object> data = new Dictionary<string, object>
+            {
+                { "mid", mid },
+                { "friendId", 0 }
+            };
+
+            switch (SelectedStatus)
+            {
+                case 0:
+                    data["friendId"] = 0;
+                    NavigateToView.NavigationView(eventAggregator, ViewFriendsViewModel.Tag, Tag, data);
+                    break;
+                case 1:
+                    data["friendId"] = 0;
+                    NavigateToView.NavigationView(eventAggregator, ViewFriendsViewModel.Tag, Tag, data);
+                    break;
+                case 2:
+                    data["friendId"] = 1;
+                    NavigateToView.NavigationView(eventAggregator, ViewFriendsViewModel.Tag, Tag, data);
+                    break;
+                default:
+                    break;
+            }
+
+            SelectedStatus = -1;
         }
 
         // 页面选择事件
@@ -385,23 +440,24 @@ namespace DownKyi.ViewModels
             CurrentExp = "--/--";
 
             StatusList.Clear();
-            StatusList.Add(new SpaceItem { Title = DictionaryResource.GetString("Following"), Subtitle = "--" });
-            StatusList.Add(new SpaceItem { Title = DictionaryResource.GetString("Whisper"), Subtitle = "--" });
-            StatusList.Add(new SpaceItem { Title = DictionaryResource.GetString("Follower"), Subtitle = "--" });
-            StatusList.Add(new SpaceItem { Title = DictionaryResource.GetString("Black"), Subtitle = "--" });
-            StatusList.Add(new SpaceItem { Title = DictionaryResource.GetString("Moral"), Subtitle = "--" });
-            StatusList.Add(new SpaceItem { Title = DictionaryResource.GetString("Silence"), Subtitle = "N/A" });
+            StatusList.Add(new SpaceItem { IsEnabled = true, Title = DictionaryResource.GetString("Following"), Subtitle = "--" });
+            StatusList.Add(new SpaceItem { IsEnabled = true, Title = DictionaryResource.GetString("Whisper"), Subtitle = "--" });
+            StatusList.Add(new SpaceItem { IsEnabled = true, Title = DictionaryResource.GetString("Follower"), Subtitle = "--" });
+            StatusList.Add(new SpaceItem { IsEnabled = false, Title = DictionaryResource.GetString("Black"), Subtitle = "--" });
+            StatusList.Add(new SpaceItem { IsEnabled = false, Title = DictionaryResource.GetString("Moral"), Subtitle = "--" });
+            StatusList.Add(new SpaceItem { IsEnabled = false, Title = DictionaryResource.GetString("Silence"), Subtitle = "N/A" });
 
             PackageList.Clear();
-            PackageList.Add(new SpaceItem { Image = NormalIcon.Instance().FavoriteOutline, Title = DictionaryResource.GetString("Favorites") });
-            PackageList.Add(new SpaceItem { Image = NormalIcon.Instance().Subscription, Title = DictionaryResource.GetString("Subscription") });
-            PackageList.Add(new SpaceItem { Image = NormalIcon.Instance().ToView, Title = DictionaryResource.GetString("ToView") });
-            PackageList.Add(new SpaceItem { Image = NormalIcon.Instance().History, Title = DictionaryResource.GetString("History") });
+            PackageList.Add(new SpaceItem { IsEnabled = true, Image = NormalIcon.Instance().FavoriteOutline, Title = DictionaryResource.GetString("Favorites") });
+            PackageList.Add(new SpaceItem { IsEnabled = true, Image = NormalIcon.Instance().Subscription, Title = DictionaryResource.GetString("Subscription") });
+            PackageList.Add(new SpaceItem { IsEnabled = true, Image = NormalIcon.Instance().ToView, Title = DictionaryResource.GetString("ToView") });
+            PackageList.Add(new SpaceItem { IsEnabled = true, Image = NormalIcon.Instance().History, Title = DictionaryResource.GetString("History") });
             NormalIcon.Instance().FavoriteOutline.Fill = DictionaryResource.GetColor("ColorPrimary");
             NormalIcon.Instance().Subscription.Fill = DictionaryResource.GetColor("ColorPrimary");
             NormalIcon.Instance().ToView.Fill = DictionaryResource.GetColor("ColorPrimary");
             NormalIcon.Instance().History.Fill = DictionaryResource.GetColor("ColorPrimary");
 
+            SelectedStatus = -1;
             SelectedPackage = -1;
 
             ContentVisibility = Visibility.Collapsed;
@@ -415,6 +471,7 @@ namespace DownKyi.ViewModels
         /// </summary>
         private async void UpdateSpaceInfo()
         {
+            bool isCancel = false;
             bool isNoData = true;
             Uri toutuUri = null;
             string headerUri = null;
@@ -423,6 +480,8 @@ namespace DownKyi.ViewModels
 
             await Task.Run(() =>
             {
+                CancellationToken cancellationToken = tokenSource.Token;
+
                 // 背景图片
                 SpaceSettings spaceSettings = Core.BiliApi.Users.UserSpace.GetSpaceSettings(mid);
                 if (spaceSettings != null)
@@ -505,7 +564,19 @@ namespace DownKyi.ViewModels
                     // 没有数据
                     isNoData = true;
                 }
-            });
+
+                // 判断是否该结束线程
+                if (cancellationToken.IsCancellationRequested)
+                {
+                    isCancel = true;
+                }
+            }, (tokenSource = new CancellationTokenSource()).Token);
+
+            // 是否该结束线程
+            if (isCancel)
+            {
+                return;
+            }
 
             // 是否获取到数据
             if (isNoData)
@@ -528,7 +599,7 @@ namespace DownKyi.ViewModels
                 // 性别
                 Sex = sexUri == null ? null : new BitmapImage(sexUri);
                 // 等级
-                Level = new BitmapImage(levelUri);
+                Level = levelUri == null ? null : new BitmapImage(levelUri);
 
                 ArrowBack.Fill = DictionaryResource.GetColor("ColorText");
                 Logout.Fill = DictionaryResource.GetColor("ColorText");

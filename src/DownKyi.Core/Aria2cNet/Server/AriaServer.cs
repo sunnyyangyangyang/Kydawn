@@ -5,8 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using System.Windows;
-using System.Windows.Controls;
 
 namespace DownKyi.Core.Aria2cNet.Server
 {
@@ -22,7 +20,7 @@ namespace DownKyi.Core.Aria2cNet.Server
         /// <param name="output"></param>
         /// <param name="window"></param>
         /// <returns></returns>
-        public static async Task<bool> StartServerAsync(AriaConfig config, TextBox output = null, Window window = null)
+        public static async Task<bool> StartServerAsync(AriaConfig config, Action<string> action)
         {
             // aria端口
             ListenPort = config.ListenPort;
@@ -90,6 +88,7 @@ namespace DownKyi.Core.Aria2cNet.Server
 
                 ExcuteProcess("aria2c.exe",
                     $"--enable-rpc --rpc-listen-all=true --rpc-allow-origin-all=true " +
+                    $"--check-certificate=false " + // 解决问题 SSL/TLS handshake failure
                     $"--rpc-listen-port={config.ListenPort} " +
                     $"--rpc-secret={config.Token} " +
                     $"--input-file=\"{sessionFile}\" --save-session=\"{sessionFile}\" " +
@@ -113,17 +112,11 @@ namespace DownKyi.Core.Aria2cNet.Server
                     null, (s, e) =>
                     {
                         if (e.Data == null || e.Data == "" || e.Data.Replace(" ", "") == "") { return; }
+
                         Utils.Debugging.Console.PrintLine(e.Data);
                         LogManager.Debug("AriaServer", e.Data);
 
-                        if (output != null && window != null)
-                        {
-                            window.Dispatcher.Invoke(new Action(() =>
-                            {
-                                output.Text += e.Data + "\n";
-                                output.ScrollToEnd();
-                            }));
-                        }
+                        action.Invoke(e.Data);
                     });
             });
 

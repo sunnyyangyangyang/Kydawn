@@ -1,4 +1,5 @@
 ﻿using DownKyi.Core.BiliApi.Users;
+using DownKyi.Core.BiliApi.Users.Models;
 using DownKyi.Core.Logging;
 using DownKyi.Core.Settings;
 using DownKyi.Core.Settings.Models;
@@ -9,8 +10,11 @@ using DownKyi.Utils;
 using Prism.Commands;
 using Prism.Events;
 using Prism.Regions;
+using Prism.Services.Dialogs;
 using System;
 using System.IO;
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media.Imaging;
@@ -88,7 +92,7 @@ namespace DownKyi.ViewModels
 
         #endregion
 
-        public ViewIndexViewModel(IEventAggregator eventAggregator) : base(eventAggregator)
+        public ViewIndexViewModel(IEventAggregator eventAggregator, IDialogService dialogService) : base(eventAggregator, dialogService)
         {
             #region 属性初始化
 
@@ -207,10 +211,13 @@ namespace DownKyi.ViewModels
         /// </summary>
         private void EnterBili()
         {
-            if (InputText == null || InputText == string.Empty) { return; }
+            if (InputText == null || InputText == string.Empty)
+            {
+                return;
+            }
 
             LogManager.Debug(Tag, $"InputText: {InputText}");
-
+            InputText = Regex.Replace(InputText, @"[【]*[^【]*[^】]*[】 ]", "");
             SearchService searchService = new SearchService();
             bool isSupport = searchService.BiliInput(InputText, Tag, eventAggregator);
             if (!isSupport)
@@ -222,26 +229,13 @@ namespace DownKyi.ViewModels
             InputText = string.Empty;
         }
 
-        /// <summary>
-        /// 更新用户登录信息
-        /// </summary>
-        private async void UpdateUserInfo()
+        private async Task<UserInfoForNavigation> GetUserInfo()
         {
-            LoginPanelVisibility = Visibility.Hidden;
-
-            // 检查本地是否存在login文件，没有则说明未登录
-            if (!File.Exists(StorageManager.GetLogin()))
-            {
-                LoginPanelVisibility = Visibility.Visible;
-                Header = new BitmapImage(new Uri("pack://application:,,,/Resources/default_header.jpg"));
-                UserName = null;
-                return;
-            }
-
+            UserInfoForNavigation userInfo = null;
             await Task.Run(new Action(() =>
             {
                 // 获取用户信息
-                var userInfo = UserInfo.GetUserInfoForNavigation();
+                userInfo = UserInfo.GetUserInfoForNavigation();
                 if (userInfo != null)
                 {
                     SettingsManager.GetInstance().SetUserInfo(new UserInfoSettings
@@ -249,7 +243,9 @@ namespace DownKyi.ViewModels
                         Mid = userInfo.Mid,
                         Name = userInfo.Name,
                         IsLogin = userInfo.IsLogin,
-                        IsVip = userInfo.VipStatus == 1
+                        IsVip = userInfo.VipStatus == 1,
+                        ImgKey = userInfo.Wbi.ImgUrl.Split('/').ToList().Last().Split('.')[0],
+                        SubKey = userInfo.Wbi.SubUrl.Split('/').ToList().Last().Split('.')[0],
                     });
                 }
                 else
@@ -259,33 +255,68 @@ namespace DownKyi.ViewModels
                         Mid = -1,
                         Name = "",
                         IsLogin = false,
-                        IsVip = false
+                        IsVip = false,
                     });
                 }
 
-                PropertyChangeAsync(new Action(() =>
+            }));
+            return userInfo;
+        }
+
+        /// <summary>
+        /// 更新用户登录信息
+        /// </summary>
+        private async void UpdateUserInfo(bool isBackgroud = false)
+        {
+            try
+            {
+                if (isBackgroud)
+                {
+                    // 获取用户信息
+                    await GetUserInfo();
+                    return;
+                }
+
+                LoginPanelVisibility = Visibility.Hidden;
+
+                // 获取用户信息
+                var userInfo = await GetUserInfo();
+
+                // 检查本地是否存在login文件，没有则说明未登录
+                if (!File.Exists(StorageManager.GetLogin()))
                 {
                     LoginPanelVisibility = Visibility.Visible;
+                    Header = new BitmapImage(new Uri("pack://application:,,,/Resources/default_header.jpg"));
+                    UserName = null;
+                    return;
+                }
 
-                    if (userInfo != null)
+                LoginPanelVisibility = Visibility.Visible;
+
+                if (userInfo != null)
+                {
+                    if (userInfo.Face != null)
                     {
-                        if (userInfo.Face != null)
-                        {
-                            Header = new StorageHeader().GetHeaderThumbnail(userInfo.Mid, userInfo.Name, userInfo.Face, 36, 36);
-                        }
-                        else
-                        {
-                            Header = new BitmapImage(new Uri("pack://application:,,,/Resources/default_header.jpg"));
-                        }
-                        UserName = userInfo.Name;
+                        Header = new StorageHeader().GetHeaderThumbnail(userInfo.Mid, userInfo.Name, userInfo.Face, 36, 36);
                     }
                     else
                     {
                         Header = new BitmapImage(new Uri("pack://application:,,,/Resources/default_header.jpg"));
-                        UserName = null;
                     }
-                }));
-            }));
+                    UserName = userInfo.Name;
+                }
+                else
+                {
+                    Header = new BitmapImage(new Uri("pack://application:,,,/Resources/default_header.jpg"));
+                    UserName = null;
+                }
+
+            }
+            catch (Exception e)
+            {
+                Core.Utils.Debugging.Console.PrintLine("UpdateUserInfo()发生异常: {0}", e);
+                LogManager.Error(Tag, e);
+            }
         }
 
         #endregion
@@ -303,22 +334,30 @@ namespace DownKyi.ViewModels
             string parameter = navigationContext.Parameters.GetValue<string>("Parameter");
             if (parameter == null)
             {
+                // 其他情况只更新设置的用户信息，不更新UI
+                UpdateUserInfo(true);
                 return;
             }
+
             // 启动
             if (parameter == "start")
             {
                 UpdateUserInfo();
             }
             // 从登录页面返回
-            if (parameter == "login")
+            else if (parameter == "login")
             {
                 UpdateUserInfo();
             }
             // 注销
-            if (parameter == "logout")
+            else if (parameter == "logout")
             {
                 UpdateUserInfo();
+            }
+            else
+            {
+                // 其他情况只更新设置的用户信息，不更新UI
+                UpdateUserInfo(true);
             }
 
         }
