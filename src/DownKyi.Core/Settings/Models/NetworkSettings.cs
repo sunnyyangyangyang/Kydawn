@@ -10,6 +10,7 @@ namespace DownKyi.Core.Settings.Models
         public AllowStatus IsLiftingOfRegion { get; set; } = AllowStatus.NONE;
 
         public AllowStatus UseSSL { get; set; } = AllowStatus.NONE;
+        public string UserAgent { get; set; } = string.Empty;
 
         public Downloader Downloader { get; set; } = Downloader.NOT_SET;
         public int MaxCurrentDownloads { get; set; } = -1;
@@ -22,6 +23,8 @@ namespace DownKyi.Core.Settings.Models
         #endregion
 
         #region Aria
+        public string AriaToken { get; set; } = null;
+        public string AriaHost { get; set; } = null;
         public int AriaListenPort { get; set; } = -1;
         public AriaConfigLogLevel AriaLogLevel { get; set; } = AriaConfigLogLevel.NOT_SET;
         public int AriaSplit { get; set; } = -1;

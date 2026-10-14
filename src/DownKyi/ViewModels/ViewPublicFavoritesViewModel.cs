@@ -26,8 +26,6 @@ namespace DownKyi.ViewModels
     {
         public const string Tag = "PagePublicFavorites";
 
-        private readonly IDialogService dialogService;
-
         private CancellationTokenSource tokenSource;
 
         #region 页面属性申明
@@ -300,7 +298,7 @@ namespace DownKyi.ViewModels
                     addToDownloadService.GetVideo();
                     addToDownloadService.ParseVideo(videoInfoService);
                     // 下载
-                    i += addToDownloadService.AddToDownload(eventAggregator, directory);
+                    i += addToDownloadService.AddToDownload(eventAggregator, dialogService, directory);
                 }
             });
 

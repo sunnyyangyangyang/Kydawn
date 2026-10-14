@@ -27,8 +27,6 @@ namespace DownKyi.ViewModels
     {
         public const string Tag = "PageMyBangumiFollow";
 
-        private readonly IDialogService dialogService;
-
         private CancellationTokenSource tokenSource;
 
         private long mid = -1;
@@ -154,8 +152,8 @@ namespace DownKyi.ViewModels
 
             TabHeaders = new ObservableCollection<TabHeader>
             {
-                new TabHeader { Id = (int)Core.BiliApi.Users.Models.BangumiType.ANIME, Title = DictionaryResource.GetString("FollowAnime") },
-                new TabHeader { Id = (int)Core.BiliApi.Users.Models.BangumiType.EPISODE, Title = DictionaryResource.GetString("FollowMovie") }
+                new TabHeader { Id = (long)Core.BiliApi.Users.Models.BangumiType.ANIME, Title = DictionaryResource.GetString("FollowAnime") },
+                new TabHeader { Id = (long)Core.BiliApi.Users.Models.BangumiType.EPISODE, Title = DictionaryResource.GetString("FollowMovie") }
             };
 
             Medias = new ObservableCollection<BangumiFollowMedia>();
@@ -350,7 +348,7 @@ namespace DownKyi.ViewModels
                     addToDownloadService.GetVideo();
                     addToDownloadService.ParseVideo(service);
                     // 下载
-                    i += addToDownloadService.AddToDownload(eventAggregator, directory);
+                    i += addToDownloadService.AddToDownload(eventAggregator, dialogService, directory);
                 }
             });
 
@@ -511,7 +509,7 @@ namespace DownKyi.ViewModels
         }
 
         /// <summary>
-        /// 导航到VideoDetail页面时执行
+        /// 导航到页面时执行
         /// </summary>
         /// <param name="navigationContext"></param>
         public override void OnNavigatedTo(NavigationContext navigationContext)

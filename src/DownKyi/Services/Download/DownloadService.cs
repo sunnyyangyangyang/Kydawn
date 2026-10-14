@@ -1,4 +1,5 @@
-﻿using DownKyi.Core.BiliApi.VideoStream;
+﻿using DownKyi.Core.BiliApi.BiliUtils;
+using DownKyi.Core.BiliApi.VideoStream;
 using DownKyi.Core.BiliApi.VideoStream.Models;
 using DownKyi.Core.Danmaku2Ass;
 using DownKyi.Core.FFmpeg;
@@ -10,19 +11,24 @@ using DownKyi.Images;
 using DownKyi.Models;
 using DownKyi.Utils;
 using DownKyi.ViewModels.DownloadManager;
+using Hardcodet.Wpf.TaskbarNotification;
+using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
 
 namespace DownKyi.Services.Download
 {
     public abstract class DownloadService
     {
         protected string Tag = "DownloadService";
-
+        protected TaskbarIcon _notifyIcon;
+        protected IDialogService dialogService;
         protected ObservableCollection<DownloadingItem> downloadingList;
         protected ObservableCollection<DownloadedItem> downloadedList;
 
@@ -39,10 +45,13 @@ namespace DownKyi.Services.Download
         /// </summary>
         /// <param name="downloading"></param>
         /// <returns></returns>
-        public DownloadService(ObservableCollection<DownloadingItem> downloadingList, ObservableCollection<DownloadedItem> downloadedList)
+        public DownloadService(ObservableCollection<DownloadingItem> downloadingList,
+            ObservableCollection<DownloadedItem> downloadedList,
+          IDialogService dialogService)
         {
             this.downloadingList = downloadingList;
             this.downloadedList = downloadedList;
+            this.dialogService = dialogService;
         }
 
         protected PlayUrlDashVideo BaseDownloadAudio(DownloadingItem downloading)
@@ -82,6 +91,11 @@ namespace DownKyi.Services.Download
                 {
                     downloadAudio = downloading.PlayUrl.Dash.Dolby.Audio[0];
                 }
+                // Hi-Res无损
+                if (downloading.AudioCodec.Id == 30251)
+                {
+                    downloadAudio = downloading.PlayUrl.Dash.Flac.Audio;
+                }
             }
             catch (Exception) { }
 
@@ -110,7 +124,8 @@ namespace DownKyi.Services.Download
             PlayUrlDashVideo downloadVideo = null;
             foreach (PlayUrlDashVideo video in downloading.PlayUrl.Dash.Video)
             {
-                if (video.Id == downloading.Resolution.Id && Utils.GetVideoCodecName(video.Codecs) == downloading.VideoCodecName)
+                Quality codecs = Constant.GetCodecIds().FirstOrDefault(t => t.Id == video.CodecId);
+                if (video.Id == downloading.Resolution.Id && codecs.Name == downloading.VideoCodecName)
                 {
                     downloadVideo = video;
                     break;
@@ -430,7 +445,20 @@ namespace DownKyi.Services.Download
             // 路径不存在则创建
             if (!Directory.Exists(path))
             {
-                Directory.CreateDirectory(path);
+                try
+                {
+                    Directory.CreateDirectory(path);
+                }
+                catch (Exception e)
+                {
+                    Core.Utils.Debugging.Console.PrintLine(Tag, e.ToString());
+                    LogManager.Debug(Tag, e.Message);
+
+                    AlertService alertService = new AlertService(dialogService);
+                    ButtonResult result = alertService.ShowError($"{path}{DictionaryResource.GetString("DirectoryError")}");
+
+                    return;
+                }
             }
 
             try
@@ -646,6 +674,7 @@ namespace DownKyi.Services.Download
                         DownloadFinishedSort finishedSort = SettingsManager.GetInstance().GetDownloadFinishedSort();
                         App.SortDownloadedList(finishedSort);
                     }));
+                    _notifyIcon.ShowBalloonTip(DictionaryResource.GetString("DownloadSuccess"), $"{downloadedItem.DownloadBase.Name}", BalloonIcon.Info);
                 }));
             }
             catch (OperationCanceledException e)
@@ -768,7 +797,6 @@ namespace DownKyi.Services.Download
                 downloadStorageService.UpdateDownloaded(item);
             }
         }
-
         /// <summary>
         /// 启动基本下载服务
         /// </summary>
@@ -776,6 +804,9 @@ namespace DownKyi.Services.Download
         {
             tokenSource = new CancellationTokenSource();
             cancellationToken = tokenSource.Token;
+            _notifyIcon = new TaskbarIcon();
+            _notifyIcon.IconSource = new BitmapImage(new Uri("pack://application:,,,/Resources/favicon.ico"));
+
             workTask = Task.Run(DoWork);
         }
 

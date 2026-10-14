@@ -139,8 +139,8 @@ namespace DownKyi.Core.BiliApi.Users
             try
             {
                 RelationWhisper relationWhisper = JsonConvert.DeserializeObject<RelationWhisper>(response);
-                if (relationWhisper == null || relationWhisper.Data == null) { return null; }
-                return relationWhisper.Data;
+                if (relationWhisper == null || relationWhisper.Data == null || relationWhisper.Data.List == null) { return null; }
+                return relationWhisper.Data.List;
             }
             catch (Exception e)
             {
@@ -210,7 +210,7 @@ namespace DownKyi.Core.BiliApi.Users
         /// <param name="ps">每页项数</param>
         /// <param name="order">排序方式</param>
         /// <returns></returns>
-        public static List<RelationFollowInfo> GetFollowingGroupContent(int tagId, int pn, int ps, FollowingOrder order = FollowingOrder.DEFAULT)
+        public static List<RelationFollowInfo> GetFollowingGroupContent(long tagId, int pn, int ps, FollowingOrder order = FollowingOrder.DEFAULT)
         {
             string orderType = "";
             if (order == FollowingOrder.ATTENTION)

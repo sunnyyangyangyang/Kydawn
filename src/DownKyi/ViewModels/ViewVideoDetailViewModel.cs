@@ -10,6 +10,7 @@ using DownKyi.Services.Download;
 using DownKyi.Utils;
 using DownKyi.ViewModels.Dialogs;
 using DownKyi.ViewModels.PageViewModels;
+using Newtonsoft.Json;
 using Prism.Commands;
 using Prism.Events;
 using Prism.Regions;
@@ -17,7 +18,10 @@ using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -29,6 +33,9 @@ namespace DownKyi.ViewModels
 
         // 保存输入字符串，避免被用户修改
         private string input = null;
+
+        // 保存当前页面服务，减少new的开销和接口调用次数
+        private IInfoService infoService;
 
         #region 页面属性申明
 
@@ -45,7 +52,13 @@ namespace DownKyi.ViewModels
             get => inputText;
             set => SetProperty(ref inputText, value);
         }
+        private string inputSearchText;
 
+        public string InputSearchText
+        {
+            get => inputSearchText;
+            set => SetProperty(ref inputSearchText, value);
+        }
         private GifImage loading;
         public GifImage Loading
         {
@@ -80,7 +93,7 @@ namespace DownKyi.ViewModels
             get => videoSections;
             set => SetProperty(ref videoSections, value);
         }
-
+        public ObservableCollection<VideoSection> CaCheVideoSections { get; set; }
         private bool isSelectAll;
         public bool IsSelectAll
         {
@@ -124,7 +137,7 @@ namespace DownKyi.ViewModels
             DownloadManage.Fill = DictionaryResource.GetColor("ColorPrimary");
 
             VideoSections = new ObservableCollection<VideoSection>();
-
+            CaCheVideoSections = new ObservableCollection<VideoSection>();
             #endregion
         }
 
@@ -171,6 +184,41 @@ namespace DownKyi.ViewModels
         private DelegateCommand inputCommand;
         public DelegateCommand InputCommand => inputCommand ?? (inputCommand = new DelegateCommand(ExecuteInputCommand, CanExecuteInputCommand));
 
+
+        private DelegateCommand inputSearchCommand;
+
+        public DelegateCommand InputSearchCommand => inputSearchCommand ?? (inputSearchCommand = new DelegateCommand(ExcuteInputSearchCommand));
+        /// <summary>
+        /// 搜索视频输入事件
+        /// </summary>
+        private async void ExcuteInputSearchCommand() {
+            await Task.Run(() =>
+            {
+                if (InputSearchText == null || InputSearchText == string.Empty)
+                {
+                    foreach (VideoSection section in VideoSections) {
+                        var cache= CaCheVideoSections.FirstOrDefault(e=>e.Id==section.Id);
+                        if (cache!=null)
+                        {
+                            section.VideoPages=cache.VideoPages;
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (VideoSection section in VideoSections)
+                    {
+                        var cache = CaCheVideoSections.FirstOrDefault(e => e.Id == section.Id);
+                        if (cache != null)
+                        {
+                            var pages = cache.VideoPages.Where(e => e.Name.Contains(InputSearchText)).ToList();
+                            section.VideoPages = pages;
+                        }
+                       
+                    }
+                }
+            });
+        }
         /// <summary>
         /// 处理输入事件
         /// </summary>
@@ -184,11 +232,11 @@ namespace DownKyi.ViewModels
                     if (InputText == null || InputText == string.Empty) { return; }
 
                     LogManager.Debug(Tag, $"InputText: {InputText}");
-
+                    InputText = Regex.Replace(InputText, @"[【]*[^【]*[^】]*[】 ]", "");
                     input = InputText;
 
                     // 更新页面
-                    UnityUpdateView(UpdateView, input, null);
+                    UnityUpdateView(UpdateView, input, null, true);
 
                     // 是否自动解析视频
                     if (SettingsManager.GetInstance().IsAutoParseVideo() == AllowStatus.YES)
@@ -365,7 +413,7 @@ namespace DownKyi.ViewModels
                 {
                     LogManager.Debug(Tag, $"Video Page: {videoPage.Cid}");
 
-                    UnityUpdateView(ParseVideo, input, videoPage);
+                    UnityUpdateView(ParseVideo, input, videoPage, true);
                 });
             }
             catch (Exception e)
@@ -581,6 +629,7 @@ namespace DownKyi.ViewModels
             NoDataVisibility = Visibility.Collapsed;
 
             VideoSections.Clear();
+            CaCheVideoSections.Clear();
         }
 
         /// <summary>
@@ -589,25 +638,34 @@ namespace DownKyi.ViewModels
         /// <param name="action"></param>
         /// <param name="input"></param>
         /// <param name="page"></param>
-        private void UnityUpdateView(Action<IInfoService, VideoPage> action, string input, VideoPage page)
+        /// <param name="force">强制new</param>
+        private void UnityUpdateView(Action<IInfoService, VideoPage> action, string input, VideoPage page,bool force = false)
         {
-            // 视频
-            if (ParseEntrance.IsAvUrl(input) || ParseEntrance.IsBvUrl(input))
+            if (infoService == null || force)
             {
-                action(new VideoInfoService(input), page);
-            }
+                // 视频
+                if (ParseEntrance.IsAvUrl(input) || ParseEntrance.IsBvUrl(input))
+                {
+                    infoService = new VideoInfoService(input);
+                }
 
-            // 番剧（电影、电视剧）
-            if (ParseEntrance.IsBangumiSeasonUrl(input) || ParseEntrance.IsBangumiEpisodeUrl(input) || ParseEntrance.IsBangumiMediaUrl(input))
-            {
-                action(new BangumiInfoService(input), page);
-            }
+                // 番剧（电影、电视剧）
+                if (ParseEntrance.IsBangumiSeasonUrl(input) || ParseEntrance.IsBangumiEpisodeUrl(input) || ParseEntrance.IsBangumiMediaUrl(input))
+                {
+                    infoService = new BangumiInfoService(input);
+                }
 
-            // 课程
-            if (ParseEntrance.IsCheeseSeasonUrl(input) || ParseEntrance.IsCheeseEpisodeUrl(input))
-            {
-                action(new CheeseInfoService(input), page);
+                // 课程
+                if (ParseEntrance.IsCheeseSeasonUrl(input) || ParseEntrance.IsCheeseEpisodeUrl(input))
+                {
+                    infoService = new CheeseInfoService(input);
+                }
             }
+            if (infoService == null)
+            {
+                return;
+            }
+            action(infoService, page);
         }
 
         /// <summary>
@@ -641,6 +699,7 @@ namespace DownKyi.ViewModels
             PropertyChangeAsync(new Action(() =>
             {
                 VideoSections.Clear();
+                CaCheVideoSections.Clear();
             }));
 
             // 添加新数据
@@ -659,17 +718,27 @@ namespace DownKyi.ViewModels
                         IsSelected = true,
                         VideoPages = pages
                     });
+                    CaCheVideoSections.Add(new VideoSection
+                    {
+                        Id = 0,
+                        Title = "default",
+                        IsSelected = true,
+                        VideoPages = pages
+                    });
                 }));
             }
             else
             {
+                //这里如果浅拷贝会导致用于查询的CaCheVideoSections数据变化，所以这样处理
+                var videoSectionsStr = JsonConvert.SerializeObject(videoSections);
+                var videoSectionsData = JsonConvert.DeserializeObject<List<VideoSection>>(videoSectionsStr);
                 PropertyChangeAsync(new Action(() =>
                 {
                     VideoSections.AddRange(videoSections);
+                    CaCheVideoSections.AddRange(videoSectionsData);
                 }));
             }
         }
-
         /// <summary>
         /// 解析视频流
         /// </summary>
@@ -716,7 +785,7 @@ namespace DownKyi.ViewModels
                 // 传递video对象
                 addToDownloadService.GetVideo(VideoInfoView, VideoSections.ToList());
                 // 下载
-                i = addToDownloadService.AddToDownload(eventAggregator, directory, isAll);
+                i = addToDownloadService.AddToDownload(eventAggregator, dialogService, directory, isAll);
             });
 
             if (directory == null)
@@ -738,7 +807,7 @@ namespace DownKyi.ViewModels
         #endregion
 
         /// <summary>
-        /// 导航到VideoDetail页面时执行
+        /// 导航到页面时执行
         /// </summary>
         /// <param name="navigationContext"></param>
         public override void OnNavigatedTo(NavigationContext navigationContext)

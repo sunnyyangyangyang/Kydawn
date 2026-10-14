@@ -10,6 +10,9 @@ namespace DownKyi.Core.Settings
         // 启用https
         private readonly AllowStatus useSSL = AllowStatus.YES;
 
+        // UserAgent
+        private readonly string userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36";
+
         // 下载器
         private readonly Downloader downloader = Downloader.ARIA;
 
@@ -21,8 +24,14 @@ namespace DownKyi.Core.Settings
 
         // HttpProxy代理
         private readonly AllowStatus isHttpProxy = AllowStatus.NO;
-        private readonly string httpProxy = "";
+        private readonly string httpProxy = string.Empty;
         private readonly int httpProxyListenPort = 0;
+
+        // Aria服务器token
+        private readonly string ariaToken = "downkyi";
+
+        // Aria服务器host
+        private readonly string ariaHost = "http://localhost";
 
         // Aria服务器端口号
         private readonly int ariaListenPort = 6800;
@@ -44,7 +53,7 @@ namespace DownKyi.Core.Settings
 
         // Aria HttpProxy代理
         private readonly AllowStatus isAriaHttpProxy = AllowStatus.NO;
-        private readonly string ariaHttpProxy = "";
+        private readonly string ariaHttpProxy = string.Empty;
         private readonly int ariaHttpProxyListenPort = 0;
 
         /// <summary>
@@ -98,6 +107,33 @@ namespace DownKyi.Core.Settings
         public bool UseSSL(AllowStatus useSSL)
         {
             appSettings.Network.UseSSL = useSSL;
+            return SetSettings();
+        }
+
+        /// <summary>
+        /// 获取UserAgent
+        /// </summary>
+        /// <returns></returns>
+        public string GetUserAgent()
+        {
+            appSettings = GetSettings();
+            if (appSettings.Network.UserAgent == string.Empty)
+            {
+                // 第一次获取，先设置默认值
+                SetUserAgent(userAgent);
+                return userAgent;
+            }
+            return appSettings.Network.UserAgent;
+        }
+
+        /// <summary>
+        /// 设置UserAgent
+        /// </summary>
+        /// <param name="userAgent"></param>
+        /// <returns></returns>
+        public bool SetUserAgent(string userAgent)
+        {
+            appSettings.Network.UserAgent = userAgent;
             return SetSettings();
         }
 
@@ -260,6 +296,60 @@ namespace DownKyi.Core.Settings
         public bool SetHttpProxyListenPort(int httpProxyListenPort)
         {
             appSettings.Network.HttpProxyListenPort = httpProxyListenPort;
+            return SetSettings();
+        }
+
+        /// <summary>
+        /// 获取Aria服务器的token
+        /// </summary>
+        /// <returns></returns>
+        public string GetAriaToken()
+        {
+            appSettings = GetSettings();
+            if (appSettings.Network.AriaToken == null)
+            {
+                // 第一次获取，先设置默认值
+                SetHttpProxy(ariaToken);
+                return ariaToken;
+            }
+            return appSettings.Network.AriaToken;
+        }
+
+        /// <summary>
+        /// 设置Aria服务器的token
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public bool SetAriaToken(string token)
+        {
+            appSettings.Network.AriaToken = token;
+            return SetSettings();
+        }
+
+        /// <summary>
+        /// 获取Aria服务器的host
+        /// </summary>
+        /// <returns></returns>
+        public string GetAriaHost()
+        {
+            appSettings = GetSettings();
+            if (appSettings.Network.AriaHost == null)
+            {
+                // 第一次获取，先设置默认值
+                SetHttpProxy(ariaHost);
+                return ariaHost;
+            }
+            return appSettings.Network.AriaHost;
+        }
+
+        /// <summary>
+        /// 设置Aria服务器的host
+        /// </summary>
+        /// <param name="host"></param>
+        /// <returns></returns>
+        public bool SetAriaHost(string host)
+        {
+            appSettings.Network.AriaHost = host;
             return SetSettings();
         }
 
