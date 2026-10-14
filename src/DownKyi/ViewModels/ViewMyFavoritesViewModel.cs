@@ -26,7 +26,7 @@ namespace DownKyi.ViewModels
     {
         public const string Tag = "PageMyFavorites";
 
-        private readonly IDialogService dialogService;
+        //private readonly IDialogService dialogService;
 
         private CancellationTokenSource tokenSource1;
         private CancellationTokenSource tokenSource2;
@@ -87,7 +87,6 @@ namespace DownKyi.ViewModels
             set => SetProperty(ref mediaContentVisibility, value);
         }
 
-
         private Visibility mediaLoadingVisibility;
         public Visibility MediaLoadingVisibility
         {
@@ -107,6 +106,13 @@ namespace DownKyi.ViewModels
         {
             get => arrowBack;
             set => SetProperty(ref arrowBack, value);
+        }
+
+        private VectorImage downloadManage;
+        public VectorImage DownloadManage
+        {
+            get => downloadManage;
+            set => SetProperty(ref downloadManage, value);
         }
 
         private ObservableCollection<TabHeader> tabHeaders;
@@ -173,6 +179,12 @@ namespace DownKyi.ViewModels
             ArrowBack = NavigationIcon.Instance().ArrowBack;
             ArrowBack.Fill = DictionaryResource.GetColor("ColorTextDark");
 
+            // 下载管理按钮
+            DownloadManage = ButtonIcon.Instance().DownloadManage;
+            DownloadManage.Height = 24;
+            DownloadManage.Width = 24;
+            DownloadManage.Fill = DictionaryResource.GetColor("ColorPrimary");
+
             TabHeaders = new ObservableCollection<TabHeader>();
             Medias = new ObservableCollection<FavoritesMedia>();
 
@@ -202,6 +214,24 @@ namespace DownKyi.ViewModels
             {
                 ViewName = ParentView,
                 ParentViewName = null,
+                Parameter = null
+            };
+            eventAggregator.GetEvent<NavigationEvent>().Publish(parameter);
+        }
+
+        // 前往下载管理页面
+        private DelegateCommand downloadManagerCommand;
+        public DelegateCommand DownloadManagerCommand => downloadManagerCommand ?? (downloadManagerCommand = new DelegateCommand(ExecuteDownloadManagerCommand));
+
+        /// <summary>
+        /// 前往下载管理页面
+        /// </summary>
+        private void ExecuteDownloadManagerCommand()
+        {
+            NavigationParam parameter = new NavigationParam
+            {
+                ViewName = ViewDownloadManagerViewModel.Tag,
+                ParentViewName = Tag,
                 Parameter = null
             };
             eventAggregator.GetEvent<NavigationEvent>().Publish(parameter);
@@ -348,7 +378,7 @@ namespace DownKyi.ViewModels
                     addToDownloadService.GetVideo();
                     addToDownloadService.ParseVideo(videoInfoService);
                     // 下载
-                    i += addToDownloadService.AddToDownload(eventAggregator, directory);
+                    i += addToDownloadService.AddToDownload(eventAggregator, dialogService, directory);
                 }
             });
 
@@ -428,6 +458,11 @@ namespace DownKyi.ViewModels
         {
             ArrowBack.Fill = DictionaryResource.GetColor("ColorTextDark");
 
+            DownloadManage = ButtonIcon.Instance().DownloadManage;
+            DownloadManage.Height = 24;
+            DownloadManage.Width = 24;
+            DownloadManage.Fill = DictionaryResource.GetColor("ColorPrimary");
+
             ContentVisibility = Visibility.Collapsed;
             LoadingVisibility = Visibility.Visible;
             NoDataVisibility = Visibility.Collapsed;
@@ -441,7 +476,7 @@ namespace DownKyi.ViewModels
         }
 
         /// <summary>
-        /// 导航到VideoDetail页面时执行
+        /// 导航到页面时执行
         /// </summary>
         /// <param name="navigationContext"></param>
         public override async void OnNavigatedTo(NavigationContext navigationContext)

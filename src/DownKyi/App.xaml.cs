@@ -4,16 +4,20 @@ using DownKyi.Utils;
 using DownKyi.ViewModels;
 using DownKyi.ViewModels.Dialogs;
 using DownKyi.ViewModels.DownloadManager;
+using DownKyi.ViewModels.Friends;
 using DownKyi.ViewModels.Settings;
 using DownKyi.ViewModels.Toolbox;
 using DownKyi.ViewModels.UserSpace;
 using DownKyi.Views;
 using DownKyi.Views.Dialogs;
 using DownKyi.Views.DownloadManager;
+using DownKyi.Views.Friends;
 using DownKyi.Views.Settings;
 using DownKyi.Views.Toolbox;
 using DownKyi.Views.UserSpace;
+using Prism.DryIoc;
 using Prism.Ioc;
+using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -121,8 +125,22 @@ namespace DownKyi
             });
 
             // 启动下载服务
-            downloadService = new AriaDownloadService(DownloadingList, DownloadedList);
-            downloadService.Start();
+            var download = SettingsManager.GetInstance().GetDownloader();
+            switch (download)
+            {
+                case Downloader.NOT_SET:
+                    break;
+                case Downloader.BUILT_IN:
+                    downloadService = new BuiltinDownloadService(DownloadingList, DownloadedList, (IDialogService)Container.GetContainer().GetService(typeof(IDialogService)));
+                    break;
+                case Downloader.ARIA:
+                    downloadService = new AriaDownloadService(DownloadingList, DownloadedList, (IDialogService)Container.GetContainer().GetService(typeof(IDialogService)));
+                    break;
+                case Downloader.CUSTOM_ARIA:
+                    downloadService = new CustomAriaDownloadService(DownloadingList, DownloadedList, (IDialogService)Container.GetContainer().GetService(typeof(IDialogService)));
+                    break;
+            }
+            downloadService?.Start();
 
             return Container.Resolve<MainWindow>();
         }
@@ -166,6 +184,8 @@ namespace DownKyi
             containerRegistry.RegisterForNavigation<ViewUserSpace>(ViewUserSpaceViewModel.Tag);
             containerRegistry.RegisterForNavigation<ViewPublication>(ViewPublicationViewModel.Tag);
             containerRegistry.RegisterForNavigation<Views.ViewChannel>(ViewModels.ViewChannelViewModel.Tag);
+            containerRegistry.RegisterForNavigation<Views.ViewSeasonsSeries>(ViewModels.ViewSeasonsSeriesViewModel.Tag);
+            containerRegistry.RegisterForNavigation<ViewFriends>(ViewFriendsViewModel.Tag);
 
             containerRegistry.RegisterForNavigation<ViewMySpace>(ViewMySpaceViewModel.Tag);
             containerRegistry.RegisterForNavigation<ViewMyFavorites>(ViewMyFavoritesViewModel.Tag);
@@ -176,6 +196,10 @@ namespace DownKyi
             // downloadManager pages
             containerRegistry.RegisterForNavigation<ViewDownloading>(ViewDownloadingViewModel.Tag);
             containerRegistry.RegisterForNavigation<ViewDownloadFinished>(ViewDownloadFinishedViewModel.Tag);
+
+            // Friend
+            containerRegistry.RegisterForNavigation<ViewFollowing>(ViewFollowingViewModel.Tag);
+            containerRegistry.RegisterForNavigation<ViewFollower>(ViewFollowerViewModel.Tag);
 
             // settings pages
             containerRegistry.RegisterForNavigation<ViewBasic>(ViewBasicViewModel.Tag);
@@ -192,8 +216,10 @@ namespace DownKyi
             // UserSpace
             containerRegistry.RegisterForNavigation<ViewArchive>(ViewArchiveViewModel.Tag);
             containerRegistry.RegisterForNavigation<Views.UserSpace.ViewChannel>(ViewModels.UserSpace.ViewChannelViewModel.Tag);
+            containerRegistry.RegisterForNavigation<Views.UserSpace.ViewSeasonsSeries>(ViewModels.UserSpace.ViewSeasonsSeriesViewModel.Tag);
 
             // dialogs
+            containerRegistry.RegisterDialog<ViewAlertDialog>(ViewAlertDialogViewModel.Tag);
             containerRegistry.RegisterDialog<ViewDownloadSetter>(ViewDownloadSetterViewModel.Tag);
             containerRegistry.RegisterDialog<ViewParsingSelector>(ViewParsingSelectorViewModel.Tag);
 

@@ -1,9 +1,15 @@
-﻿using DownKyi.Core.Settings;
+﻿using DownKyi.Core.Logging;
+using DownKyi.Core.Settings;
+using DownKyi.Services;
+using DownKyi.Utils;
 using Prism.Commands;
 using Prism.Events;
+using Prism.Regions;
+using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -31,10 +37,18 @@ namespace DownKyi.ViewModels.DownloadManager
 
         #endregion
 
-        public ViewDownloadFinishedViewModel(IEventAggregator eventAggregator) : base(eventAggregator)
+        public ViewDownloadFinishedViewModel(IEventAggregator eventAggregator, IDialogService dialogService) : base(eventAggregator, dialogService)
         {
             // 初始化DownloadedList
             DownloadedList = App.DownloadedList;
+            DownloadedList.CollectionChanged += new NotifyCollectionChangedEventHandler((sender, e) =>
+            {
+                if (e.Action == NotifyCollectionChangedAction.Add)
+                {
+                    SetDialogService();
+                }
+            });
+            SetDialogService();
 
             DownloadFinishedSort finishedSort = SettingsManager.GetInstance().GetDownloadFinishedSort();
             switch (finishedSort)
@@ -95,6 +109,13 @@ namespace DownKyi.ViewModels.DownloadManager
         /// </summary>
         private async void ExecuteClearAllDownloadedCommand()
         {
+            AlertService alertService = new AlertService(dialogService);
+            ButtonResult result = alertService.ShowWarning(DictionaryResource.GetString("ConfirmDelete"));
+            if (result != ButtonResult.OK)
+            {
+                return;
+            }
+
             // 使用Clear()不能触发NotifyCollectionChangedAction.Remove事件
             // 因此遍历删除
             // DownloadingList中元素被删除后不能继续遍历
@@ -112,6 +133,36 @@ namespace DownKyi.ViewModels.DownloadManager
         }
 
         #endregion
+
+        private async void SetDialogService()
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    List<DownloadedItem> list = DownloadedList.ToList();
+                    foreach (var item in list)
+                    {
+                        if (item != null && item.DialogService == null)
+                        {
+                            item.DialogService = dialogService;
+                        }
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                Core.Utils.Debugging.Console.PrintLine("SetDialogService()发生异常: {0}", e);
+                LogManager.Error($"{Tag}.SetDialogService()", e);
+            }
+        }
+
+        public override void OnNavigatedFrom(NavigationContext navigationContext)
+        {
+            base.OnNavigatedFrom(navigationContext);
+
+            SetDialogService();
+        }
 
     }
 }

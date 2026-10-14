@@ -27,8 +27,6 @@ namespace DownKyi.ViewModels
     {
         public const string Tag = "PageMyBangumiFollow";
 
-        private readonly IDialogService dialogService;
-
         private CancellationTokenSource tokenSource;
 
         private long mid = -1;
@@ -50,6 +48,13 @@ namespace DownKyi.ViewModels
         {
             get => arrowBack;
             set => SetProperty(ref arrowBack, value);
+        }
+
+        private VectorImage downloadManage;
+        public VectorImage DownloadManage
+        {
+            get => downloadManage;
+            set => SetProperty(ref downloadManage, value);
         }
 
         private ObservableCollection<TabHeader> tabHeaders;
@@ -139,10 +144,16 @@ namespace DownKyi.ViewModels
             ArrowBack = NavigationIcon.Instance().ArrowBack;
             ArrowBack.Fill = DictionaryResource.GetColor("ColorTextDark");
 
+            // 下载管理按钮
+            DownloadManage = ButtonIcon.Instance().DownloadManage;
+            DownloadManage.Height = 24;
+            DownloadManage.Width = 24;
+            DownloadManage.Fill = DictionaryResource.GetColor("ColorPrimary");
+
             TabHeaders = new ObservableCollection<TabHeader>
             {
-                new TabHeader { Id = (int)Core.BiliApi.Users.Models.BangumiType.ANIME, Title = DictionaryResource.GetString("FollowAnime") },
-                new TabHeader { Id = (int)Core.BiliApi.Users.Models.BangumiType.EPISODE, Title = DictionaryResource.GetString("FollowMovie") }
+                new TabHeader { Id = (long)Core.BiliApi.Users.Models.BangumiType.ANIME, Title = DictionaryResource.GetString("FollowAnime") },
+                new TabHeader { Id = (long)Core.BiliApi.Users.Models.BangumiType.EPISODE, Title = DictionaryResource.GetString("FollowMovie") }
             };
 
             Medias = new ObservableCollection<BangumiFollowMedia>();
@@ -178,12 +189,30 @@ namespace DownKyi.ViewModels
             eventAggregator.GetEvent<NavigationEvent>().Publish(parameter);
         }
 
+        // 前往下载管理页面
+        private DelegateCommand downloadManagerCommand;
+        public DelegateCommand DownloadManagerCommand => downloadManagerCommand ?? (downloadManagerCommand = new DelegateCommand(ExecuteDownloadManagerCommand));
+
+        /// <summary>
+        /// 前往下载管理页面
+        /// </summary>
+        private void ExecuteDownloadManagerCommand()
+        {
+            NavigationParam parameter = new NavigationParam
+            {
+                ViewName = ViewDownloadManagerViewModel.Tag,
+                ParentViewName = Tag,
+                Parameter = null
+            };
+            eventAggregator.GetEvent<NavigationEvent>().Publish(parameter);
+        }
+
         // 顶部tab点击事件
         private DelegateCommand<object> tabHeadersCommand;
         public DelegateCommand<object> TabHeadersCommand => tabHeadersCommand ?? (tabHeadersCommand = new DelegateCommand<object>(ExecuteTabHeadersCommand, CanExecuteTabHeadersCommand));
 
         /// <summary>
-        /// 左侧tab点击事件
+        /// 顶部tab点击事件
         /// </summary>
         /// <param name="parameter"></param>
         private void ExecuteTabHeadersCommand(object parameter)
@@ -319,7 +348,7 @@ namespace DownKyi.ViewModels
                     addToDownloadService.GetVideo();
                     addToDownloadService.ParseVideo(service);
                     // 下载
-                    i += addToDownloadService.AddToDownload(eventAggregator, directory);
+                    i += addToDownloadService.AddToDownload(eventAggregator, dialogService, directory);
                 }
             });
 
@@ -480,7 +509,7 @@ namespace DownKyi.ViewModels
         }
 
         /// <summary>
-        /// 导航到VideoDetail页面时执行
+        /// 导航到页面时执行
         /// </summary>
         /// <param name="navigationContext"></param>
         public override void OnNavigatedTo(NavigationContext navigationContext)
@@ -488,6 +517,11 @@ namespace DownKyi.ViewModels
             base.OnNavigatedTo(navigationContext);
 
             ArrowBack.Fill = DictionaryResource.GetColor("ColorTextDark");
+
+            DownloadManage = ButtonIcon.Instance().DownloadManage;
+            DownloadManage.Height = 24;
+            DownloadManage.Width = 24;
+            DownloadManage.Fill = DictionaryResource.GetColor("ColorPrimary");
 
             // 根据传入参数不同执行不同任务
             mid = navigationContext.Parameters.GetValue<long>("Parameter");

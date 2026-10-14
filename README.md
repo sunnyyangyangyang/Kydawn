@@ -1,37 +1,67 @@
-# 哔哩下载姬
-![Alipay](images/app/index.png)
+# Kydawn · 哔哩下载姬
+> U0001F343️ **Rebirth / 秽土转生** — 本项目为 [哔哩下载姬](https://github.com/leiurayer/downkyi) 的延续。原仓库因 B 站律师函关停，现于新仓库继续维护。
+> 仅保留全部 PR 及直接关联的 issue;其余历史 issue 已归档至 CSV。
+> _The reborn home of DownKyi (哔哩下载姬)._
+
+<p align="center">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/stargazers" style="text-decoration:none" >
+        <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/sunnyyangyangyang/Kydawn">
+    </a>
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/network" style="text-decoration:none" >
+        <img alt="GitHub forks" src="https://img.shields.io/github/forks/sunnyyangyangyang/Kydawn">
+    </a>
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/issues" style="text-decoration:none">
+        <img alt="GitHub issues" src="https://img.shields.io/github/issues/sunnyyangyangyang/Kydawn">
+    </a>
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/blob/main/LICENSE" style="text-decoration:none" >
+        <img alt="GitHub" src="https://img.shields.io/github/license/sunnyyangyangyang/Kydawn">
+    </a>
+</p>
+
+![index.png](https://s2.loli.net/2022/06/04/dOsqtfBXceRgrj2.png)
 
 哔哩下载姬（DownKyi）是一个简单易用的哔哩哔哩视频下载工具，具有简洁的界面，流畅的操作逻辑。哔哩下载姬可以下载几乎所有的B站视频，并输出mp4格式的文件；采用Aria下载器多线程下载，采用FFmpeg对视频进行混流、提取音视频等操作。
 
 [更多详情](src/README.md)
 
-## 更新日志
-
-[全部更新日志](CHANGELOG.md)
-
-* `2022/03/13` v1.5.0-alpha4
-    1. [优化] 配置文件目录改为当前程序目录。
-    2. [修复] 部分UI显示。
-    3. [修复] 因数据库中的重复内容导致的闪退问题。
-    4. [修复] 其他已知问题。
-
 ## 下载
 
-- [哔哩下载姬最新版](https://github.com/FlySelfLog/downkyi/releases/download/v1.5.0-alpha4/DownKyi-1.5.0-alpha4.zip)
+<p align="left">
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/releases/latest" style="text-decoration:none">
+       <img alt="GitHub release (latest by date)" src="https://img.shields.io/github/v/release/sunnyyangyangyang/Kydawn">
+    </a>
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/releases/latest" style="text-decoration:none">
+       <img alt="GitHub Release Date" src="https://img.shields.io/github/release-date/sunnyyangyangyang/Kydawn">
+    </a>
+    <a href="https://github.com/sunnyyangyangyang/Kydawn/releases" style="text-decoration:none">
+       <img alt="GitHub all releases" src="https://img.shields.io/github/downloads/sunnyyangyangyang/Kydawn/total">
+    </a>
+</p>
 
-- [下载页面](https://github.com/FlySelfLog/downkyi/releases)
+[更新日志](CHANGELOG.md)
 
-## 赞助
+## 问题
 
-如果这个项目对您有很大帮助，并且您希望支持该项目的开发和维护，请随时扫描一下二维码进行捐赠。非常感谢您的捐款，谢谢！
-
-![Alipay](images/Alipay.png)![WeChat](images/WeChat.png)
+- Aria下载失败：检查aria2c.exe是否可以正常工作和是否允许通过防火墙；或者尝试切换端口号。
+- 内建下载器失败：请提issue，也欢迎pr。
+- 下载时卡在“混流中”：检查ffmpeg.exe是否可以正常工作。
+- 去水印：宽/高为水印的尺寸，X/Y为水印在图像中的位置（以左上角为原点），这四个数据可通过Photoshop获得。
 
 ## 开发
 
+### x86 & x64
+
+发布的压缩包中aria2c.exe和ffmpeg.exe均为32位，如果需要请用下面链接中的文件替换。
+
+- [aria2-1.36.0-win-32bit](third_party/aria2-1.36.0-win-32bit-build1.zip)
+- [aria2-1.36.0-win-64bit](third_party/aria2-1.36.0-win-64bit-build1.zip)
+- [FFmpeg](https://github.com/leiurayer/FFmpeg-Builds/releases/tag/latest)
+
 ### 相关项目
 
-- [哔哩哔哩-API收集整理](https://github.com/SocialSisterYi/bilibili-API-collect)
+- [哔哩哔哩-API收集整理](https://github.com/SocialSisterYi/bilibili-API-collect)：B站API归档
+- [Prism](https://github.com/PrismLibrary/Prism)：MVVM框架
+- [WebPSharp](https://github.com/leiurayer/WebPSharp)：WebP格式图片支持，[NuGet程序包](third_party/WebPSharp.0.5.1.nupkg)
 
 ## 免责申明
 
