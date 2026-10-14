@@ -191,6 +191,11 @@ namespace DownKyi.Services.Download
                 });
             }
 
+            // 下载设置dialog中如果点击取消或者关闭窗口，
+            // 会返回空字符串，
+            // 这时直接退出
+            if (string.IsNullOrEmpty(directory)) { return null; }
+
             if (!Directory.Exists(Directory.GetDirectoryRoot(directory)))
             {
                 var alert = new AlertService(dialogService);
@@ -199,10 +204,6 @@ namespace DownKyi.Services.Download
                 directory = string.Empty;
             }
 
-            // 下载设置dialog中如果点击取消或者关闭窗口，
-            // 会返回空字符串，
-            // 这时直接退出
-            if (directory == null || directory == string.Empty) { return null; }
 
             // 文件夹不存在则创建
             if (!Directory.Exists(directory))
@@ -220,7 +221,7 @@ namespace DownKyi.Services.Download
         /// <param name="directory">下载路径</param>
         /// <param name="isAll">是否下载所有，包括未选中项</param>
         /// <returns>添加的数量</returns>
-        public int AddToDownload(IEventAggregator eventAggregator, string directory, bool isAll = false)
+        public int AddToDownload(IEventAggregator eventAggregator, IDialogService dialogService, string directory, bool isAll = false)
         {
             if (directory == null || directory == string.Empty) { return -1; }
             if (videoSections == null) { return -1; }
@@ -268,7 +269,7 @@ namespace DownKyi.Services.Download
                     }
                     if (isDownloading) { continue; }
 
-                    // TODO 如果存在下载完成列表，弹出选择框是否再次下载
+                    // 如果存在下载完成列表，弹出选择框是否再次下载
                     bool isDownloaded = false;
                     foreach (DownloadedItem item in App.DownloadedList)
                     {
@@ -276,8 +277,25 @@ namespace DownKyi.Services.Download
 
                         if (item.DownloadBase.Cid == page.Cid && item.Resolution.Id == page.VideoQuality.Quality && item.AudioCodec.Name == page.AudioQualityFormat && item.VideoCodecName == page.VideoQuality.SelectedVideoCodec)
                         {
-                            eventAggregator.GetEvent<MessageEvent>().Publish($"{page.Name}{DictionaryResource.GetString("TipAlreadyToAddDownloaded")}");
-                            isDownloaded = true;
+                            //eventAggregator.GetEvent<MessageEvent>().Publish($"{page.Name}{DictionaryResource.GetString("TipAlreadyToAddDownloaded")}");
+                            //isDownloaded = true;
+
+                            AlertService alertService = new AlertService(dialogService);
+                            ButtonResult result = alertService.ShowInfo(DictionaryResource.GetString("TipAlreadyToAddDownloaded2"));
+                            if (result == ButtonResult.OK)
+                            {
+                                App.PropertyChangeAsync(() =>
+                                {
+                                    App.DownloadedList.Remove(item);
+                                });
+
+                                isDownloaded = false;
+                            }
+                            else
+                            {
+                                isDownloaded = true;
+                            }
+
                             break;
                         }
                     }
