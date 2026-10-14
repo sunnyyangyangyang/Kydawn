@@ -144,14 +144,15 @@
 
     <system:String x:Key="TipAlreadyToAddDownloading">已经添加到下载列表~</system:String>
     <system:String x:Key="TipAlreadyToAddDownloaded">已经下载完成~</system:String>
-    <system:String x:Key="TipAddDownloadingZero">没有选中项符合下载要求！</system:String>
+    <system:String x:Key="TipAlreadyToAddDownloaded2">该视频已经下载完成，是否重新下载？</system:String>
+    <system:String x:Key="TipAddDownloadingZero">没有添加任何视频~</system:String>
     <system:String x:Key="TipAddDownloadingFinished1">成功添加了</system:String>
     <system:String x:Key="TipAddDownloadingFinished2">项~</system:String>
 
     <!--  DownloadManager  -->
     <system:String x:Key="Downloading">正在下载</system:String>
     <system:String x:Key="DownloadFinished">已下载</system:String>
-
+    <system:String x:Key="DownloadSuccess">下载完成</system:String>
     <system:String x:Key="DownloadingAudio">音频</system:String>
     <system:String x:Key="DownloadingVideo">视频</system:String>
     <system:String x:Key="DownloadingDanmaku">弹幕</system:String>
@@ -200,7 +201,7 @@
     <system:String x:Key="UseSSL">启用https（若下载器提示SSL错误，则关闭此项）</system:String>
     <system:String x:Key="UserAgent">UserAgent：</system:String>
     <system:String x:Key="SelectDownloader">选择下载器（重启生效）：</system:String>
-    <system:String x:Key="BuiltinDownloader">内建下载器（测试）</system:String>
+    <system:String x:Key="BuiltinDownloader">内建下载器</system:String>
     <system:String x:Key="Aria2cDownloader">Aria2下载器</system:String>
     <system:String x:Key="CustomAria2cDownloader">自定义Aria2下载器</system:String>
     <system:String x:Key="AriaServerHost">Aria服务器地址：</system:String>
