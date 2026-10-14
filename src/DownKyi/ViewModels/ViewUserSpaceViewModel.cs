@@ -156,6 +156,14 @@ namespace DownKyi.ViewModels
             set => SetProperty(ref tabRightBanners, value);
         }
 
+        private int selectedRightBanner;
+        public int SelectedRightBanner
+        {
+            get => selectedRightBanner;
+            set => SetProperty(ref selectedRightBanner, value);
+        }
+
+
         #endregion
 
         public ViewUserSpaceViewModel(IRegionManager regionManager, IEventAggregator eventAggregator) : base(eventAggregator)
@@ -200,7 +208,6 @@ namespace DownKyi.ViewModels
             eventAggregator.GetEvent<NavigationEvent>().Publish(parameter);
         }
 
-
         // 左侧tab点击事件
         private DelegateCommand<object> tabLeftBannersCommand;
         public DelegateCommand<object> TabLeftBannersCommand => tabLeftBannersCommand ?? (tabLeftBannersCommand = new DelegateCommand<object>(ExecuteTabLeftBannersCommand));
@@ -221,13 +228,58 @@ namespace DownKyi.ViewModels
 
             switch (banner.Id)
             {
-                case 0:
+                case 0: // 投稿
                     regionManager.RequestNavigate("UserSpaceContentRegion", ViewArchiveViewModel.Tag, param);
                     break;
-                case 1:
+                case 1: // 频道（弃用）
                     regionManager.RequestNavigate("UserSpaceContentRegion", UserSpace.ViewChannelViewModel.Tag, param);
                     break;
+                case 2: // 合集和列表
+                    regionManager.RequestNavigate("UserSpaceContentRegion", UserSpace.ViewSeasonsSeriesViewModel.Tag, param);
+                    break;
             }
+        }
+
+        // 右侧tab点击事件
+        private DelegateCommand<object> tabRightBannersCommand;
+        public DelegateCommand<object> TabRightBannersCommand => tabRightBannersCommand ?? (tabRightBannersCommand = new DelegateCommand<object>(ExecuteTabRightBannersCommand));
+
+        /// <summary>
+        /// 右侧tab点击事件
+        /// </summary>
+        private void ExecuteTabRightBannersCommand(object parameter)
+        {
+            if (!(parameter is TabRightBanner banner)) { return; }
+
+            Dictionary<string, object> data = new Dictionary<string, object>
+            {
+                { "mid", mid },
+                { "friendId", 0 }
+            };
+
+            string parentViewName;
+            if (ParentView == ViewFriendsViewModel.Tag)
+            {
+                parentViewName = ViewIndexViewModel.Tag;
+            }
+            else
+            {
+                parentViewName = Tag;
+            }
+
+            switch (banner.Id)
+            {
+                case 0:
+                    data["friendId"] = 0;
+                    NavigateToView.NavigationView(eventAggregator, ViewFriendsViewModel.Tag, parentViewName, data);
+                    break;
+                case 1:
+                    data["friendId"] = 1;
+                    NavigateToView.NavigationView(eventAggregator, ViewFriendsViewModel.Tag, parentViewName, data);
+                    break;
+            }
+
+            SelectedRightBanner = -1;
         }
 
         #endregion
@@ -251,6 +303,8 @@ namespace DownKyi.ViewModels
 
             TabLeftBanners.Clear();
             TabRightBanners.Clear();
+
+            SelectedRightBanner = -1;
 
             // 将内容置空，使其不指向任何页面
             regionManager.RequestNavigate("UserSpaceContentRegion", "");
@@ -308,7 +362,7 @@ namespace DownKyi.ViewModels
                         sexUri = new Uri($"pack://application:,,,/Resources/sex/female.png");
                     }
                     // 显示vip信息
-                    if (userInfo.Vip.Label.Text == null || userInfo.Vip.Label.Text == "")
+                    if (userInfo.Vip == null || userInfo.Vip.Label.Text == null || userInfo.Vip.Label.Text == "")
                     {
                         VipTypeVisibility = Visibility.Collapsed;
                     }
@@ -386,20 +440,38 @@ namespace DownKyi.ViewModels
             }
 
             // 频道
-            List<SpaceChannelList> channelList = null;
+            //List<SpaceChannelList> channelList = null;
+            //await Task.Run(() =>
+            //{
+            //    channelList = Core.BiliApi.Users.UserSpace.GetChannelList(mid);
+            //});
+            //if (channelList != null && channelList.Count > 0)
+            //{
+            //    TabLeftBanners.Add(new TabLeftBanner
+            //    {
+            //        Object = channelList,
+            //        Id = 1,
+            //        Icon = NormalIcon.Instance().Channel,
+            //        IconColor = "#FF23C9ED",
+            //        Title = DictionaryResource.GetString("Channel")
+            //    });
+            //}
+
+            // 合集和列表
+            SpaceSeasonsSeries seasonsSeries = null;
             await Task.Run(() =>
             {
-                channelList = Core.BiliApi.Users.UserSpace.GetChannelList(mid);
+                seasonsSeries = Core.BiliApi.Users.UserSpace.GetSeasonsSeries(mid, 1, 20);
             });
-            if (channelList != null && channelList.Count > 0)
+            if (seasonsSeries != null && seasonsSeries.Page.Total > 0)
             {
                 TabLeftBanners.Add(new TabLeftBanner
                 {
-                    Object = channelList,
-                    Id = 1,
+                    Object = seasonsSeries,
+                    Id = 2,
                     Icon = NormalIcon.Instance().Channel,
                     IconColor = "#FF23C9ED",
-                    Title = DictionaryResource.GetString("Channel")
+                    Title = DictionaryResource.GetString("SeasonsSeries")
                 });
             }
 
@@ -416,6 +488,7 @@ namespace DownKyi.ViewModels
             {
                 TabRightBanners.Add(new TabRightBanner
                 {
+                    Id = 0,
                     IsEnabled = true,
                     LabelColor = DictionaryResource.GetColor("ColorPrimary"),
                     CountColor = DictionaryResource.GetColor("ColorPrimary"),
@@ -424,6 +497,7 @@ namespace DownKyi.ViewModels
                 });
                 TabRightBanners.Add(new TabRightBanner
                 {
+                    Id = 1,
                     IsEnabled = true,
                     LabelColor = DictionaryResource.GetColor("ColorPrimary"),
                     CountColor = DictionaryResource.GetColor("ColorPrimary"),
@@ -442,6 +516,7 @@ namespace DownKyi.ViewModels
             {
                 TabRightBanners.Add(new TabRightBanner
                 {
+                    Id = 2,
                     IsEnabled = false,
                     LabelColor = DictionaryResource.GetColor("ColorTextGrey"),
                     CountColor = DictionaryResource.GetColor("ColorTextDark"),
@@ -456,6 +531,7 @@ namespace DownKyi.ViewModels
                 }
                 TabRightBanners.Add(new TabRightBanner
                 {
+                    Id = 3,
                     IsEnabled = false,
                     LabelColor = DictionaryResource.GetColor("ColorTextGrey"),
                     CountColor = DictionaryResource.GetColor("ColorTextDark"),
@@ -470,6 +546,7 @@ namespace DownKyi.ViewModels
                 }
                 TabRightBanners.Add(new TabRightBanner
                 {
+                    Id = 4,
                     IsEnabled = false,
                     LabelColor = DictionaryResource.GetColor("ColorTextGrey"),
                     CountColor = DictionaryResource.GetColor("ColorTextDark"),

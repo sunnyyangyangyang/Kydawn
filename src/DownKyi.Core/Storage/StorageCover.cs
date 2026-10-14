@@ -5,6 +5,7 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Windows.Media.Imaging;
+using WebPSharp;
 
 namespace DownKyi.Core.Storage
 {
@@ -44,10 +45,38 @@ namespace DownKyi.Core.Storage
         {
             if (cover == null) { return null; }
 
-            Bitmap bitmap = new Bitmap(cover);
-            Image thumbnail = bitmap.GetThumbnailImage(width, height, null, IntPtr.Zero);
+            try
+            {
+                Bitmap bitmap = new Bitmap(cover);
+                Image thumbnail = bitmap.GetThumbnailImage(width, height, null, IntPtr.Zero);
 
-            return StorageUtils.BitmapToBitmapImage(new Bitmap(thumbnail));
+                return StorageUtils.BitmapToBitmapImage(new Bitmap(thumbnail));
+            }
+            catch (ArgumentException)
+            {
+                try
+                {
+                    SimpleDecoder simpleDecoder = new SimpleDecoder(cover);
+                    Bitmap bitmap = simpleDecoder.WebPtoBitmap();
+                    Image thumbnail = bitmap.GetThumbnailImage(width, height, null, IntPtr.Zero);
+
+                    return StorageUtils.BitmapToBitmapImage(new Bitmap(thumbnail));
+                }
+                catch (Exception ex)
+                {
+                    Utils.Debugging.Console.PrintLine("GetCoverThumbnail()发生异常: {0}", ex);
+                    LogManager.Error("StorageCover.GetCoverThumbnail()", ex);
+
+                    return null;
+                }
+            }
+            catch (Exception e)
+            {
+                Utils.Debugging.Console.PrintLine("GetCoverThumbnail()发生异常: {0}", e);
+                LogManager.Error("StorageCover.GetCoverThumbnail()", e);
+
+                return null;
+            }
         }
 
         /// <summary>

@@ -1,14 +1,21 @@
 ﻿using DownKyi.Images;
 using DownKyi.Models;
+using DownKyi.Services;
 using DownKyi.Utils;
 using Prism.Commands;
+using Prism.Services.Dialogs;
 using System.IO;
+using System.Linq;
 
 namespace DownKyi.ViewModels.DownloadManager
 {
     public class DownloadedItem : DownloadBaseItem
     {
-        public DownloadedItem() : base()
+        public DownloadedItem() : this(null)
+        {
+        }
+
+        public DownloadedItem(IDialogService dialogService) : base(dialogService)
         {
             // 打开文件夹按钮
             OpenFolder = ButtonIcon.Instance().Folder;
@@ -85,8 +92,24 @@ namespace DownKyi.ViewModels.DownloadManager
         private void ExecuteOpenFolderCommand()
         {
             if (DownloadBase == null) { return; }
-
-            string videoPath = $"{DownloadBase.FilePath}.mp4";
+            //TODO:这里不光有mp4视频文件，也可能存在音频文件、字幕，或者其他文件类型
+            //fix bug:Issues #709
+            //这里根据需要下载的类型判断，具体对应的文件后缀名
+            var downLoadContents = DownloadBase.NeedDownloadContent.Where(e => e.Value == true).Select(e => e.Key);
+            string fileSuffix = string.Empty;
+            if (downLoadContents.Contains("downloadVideo"))
+            {
+                fileSuffix = ".mp4";
+            }
+            else if (downLoadContents.Contains("downloadAudio"))
+            {
+                fileSuffix = ".aac";
+            }
+            else if (downLoadContents.Contains("downloadCover"))
+            {
+                fileSuffix = ".jpg";
+            }
+            string videoPath = $"{DownloadBase.FilePath}{fileSuffix}";
             FileInfo fileInfo = new FileInfo(videoPath);
             if (File.Exists(fileInfo.FullName))
             {
@@ -131,6 +154,13 @@ namespace DownKyi.ViewModels.DownloadManager
         /// </summary>
         private void ExecuteRemoveVideoCommand()
         {
+            AlertService alertService = new AlertService(DialogService);
+            ButtonResult result = alertService.ShowWarning(DictionaryResource.GetString("ConfirmDelete"), 2);
+            if (result != ButtonResult.OK)
+            {
+                return;
+            }
+
             App.DownloadedList.Remove(this);
         }
 

@@ -10,12 +10,12 @@
     <RootNamespace>DownKyi</RootNamespace>
     <AssemblyName>DownKyi</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <GenerateResourceUsePreserializedResources>true</GenerateResourceUsePreserializedResources>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
-    <PublishUrl>publish\</PublishUrl>
+<PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
     <UpdateEnabled>false</UpdateEnabled>
@@ -56,10 +56,27 @@
   <PropertyGroup>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\x64\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+    <PlatformTarget>x64</PlatformTarget>
+    <OutputPath>bin\x64\Release\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+    <PlatformTarget>x86</PlatformTarget>
+    <OutputPath>bin\x86\Debug\</OutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+    <PlatformTarget>x86</PlatformTarget>
+    <OutputPath>bin\x86\Release\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Memory, Version=4.0.1.2, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
@@ -73,12 +90,23 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="Prism"><HintPath>..\packages\Prism.Core.8.1.97\lib\net47\Prism.dll</HintPath></Reference>
+    <Reference Include="Prism.Wpf"><HintPath>..\packages\Prism.Wpf.8.1.97\lib\net47\Prism.Wpf.dll</HintPath></Reference>
+    <Reference Include="Prism.DryIoc.Wpf"><HintPath>..\packages\Prism.DryIoc.8.1.97\lib\net47\Prism.DryIoc.Wpf.dll</HintPath></Reference>
+    <Reference Include="DryIoc"><HintPath>..\packages\DryIoc.dll.4.7.7\lib\net45\DryIoc.dll</HintPath></Reference>
+    <Reference Include="Microsoft.Xaml.Behaviors"><HintPath>..\packages\Microsoft.Xaml.Behaviors.Wpf.1.1.31\lib\net45\Microsoft.Xaml.Behaviors.dll</HintPath></Reference>
+    <Reference Include="Hardcodet.NotifyIcon.Wpf"><HintPath>..\packages\Hardcodet.NotifyIcon.Wpf.2.0.1\lib\net472\Hardcodet.NotifyIcon.Wpf.dll</HintPath></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath></Reference>
+    <Reference Include="System.Data.SQLite"><HintPath>..\packages\System.Data.SQLite.Core.1.0.112.2\lib\net40\System.Data.SQLite.dll</HintPath></Reference>
+    <Reference Include="System.Resources.Extensions"><HintPath>..\packages\System.Resources.Extensions.8.0.0\lib\net462\System.Resources.Extensions.dll</HintPath></Reference>
+    <Reference Include="System.Xaml" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AppConstant.cs" />
     <Compile Include="Converter\CountConverter.cs" />
     <Compile Include="CustomControl\CustomPager.xaml.cs">
       <DependentUpon>CustomPager.xaml</DependentUpon>
@@ -97,14 +125,22 @@
     <Compile Include="Models\Downloaded.cs" />
     <Compile Include="Models\Downloading.cs" />
     <Compile Include="Models\DownloadStatus.cs" />
+    <Compile Include="Models\OrderFormatDisplay.cs" />
+    <Compile Include="Services\AlertService.cs" />
     <Compile Include="Services\Download\AddToDownloadService.cs" />
+    <Compile Include="Services\Download\CustomAriaDownloadService.cs" />
+    <Compile Include="Services\Download\BuiltinDownloadService.cs" />
     <Compile Include="Services\Download\DownloadStorageService.cs" />
     <Compile Include="Services\SearchService.cs" />
+    <Compile Include="ViewModels\Friends\ViewFollowerViewModel.cs" />
+    <Compile Include="ViewModels\Friends\ViewFollowingViewModel.cs" />
     <Compile Include="Utils\WindowAdaptation.cs" />
+    <Compile Include="ViewModels\Dialogs\ViewAlertDialogViewModel.cs" />
     <Compile Include="ViewModels\PageViewModels\BangumiFollowMedia.cs" />
     <Compile Include="ViewModels\PageViewModels\Favorites.cs" />
     <Compile Include="ViewModels\PageViewModels\FavoritesMedia.cs" />
     <Compile Include="ViewModels\PageViewModels\ChannelMedia.cs" />
+    <Compile Include="ViewModels\PageViewModels\FriendInfo.cs" />
     <Compile Include="ViewModels\PageViewModels\HistoryMedia.cs" />
     <Compile Include="ViewModels\PageViewModels\PublicationMedia.cs" />
     <Compile Include="ViewModels\PageViewModels\SpaceItem.cs" />
@@ -143,15 +179,19 @@
     <Compile Include="ViewModels\DownloadManager\ViewDownloadingViewModel.cs" />
     <Compile Include="ViewModels\Toolbox\ViewBiliHelperViewModel.cs" />
     <Compile Include="ViewModels\Toolbox\ViewDelogoViewModel.cs" />
+    <Compile Include="ViewModels\UserSpace\SeasonsSeries.cs" />
     <Compile Include="ViewModels\UserSpace\Channel.cs" />
     <Compile Include="ViewModels\UserSpace\PublicationZone.cs" />
+    <Compile Include="ViewModels\UserSpace\ViewSeasonsSeriesViewModel.cs" />
     <Compile Include="ViewModels\UserSpace\ViewChannelViewModel.cs" />
     <Compile Include="ViewModels\UserSpace\ViewArchiveViewModel.cs" />
     <Compile Include="ViewModels\UserSpace\TabLeftBanner.cs" />
     <Compile Include="ViewModels\UserSpace\TabRightBanner.cs" />
+    <Compile Include="ViewModels\ViewSeasonsSeriesViewModel.cs" />
     <Compile Include="ViewModels\ViewChannelViewModel.cs" />
     <Compile Include="ViewModels\ViewDownloadManagerViewModel.cs" />
     <Compile Include="ViewModels\Toolbox\ViewExtractMediaViewModel.cs" />
+    <Compile Include="ViewModels\ViewFriendsViewModel.cs" />
     <Compile Include="ViewModels\ViewIndexViewModel.cs" />
     <Compile Include="ViewModels\ViewLoginViewModel.cs" />
     <Compile Include="ViewModels\Settings\ViewNetworkViewModel.cs" />
@@ -168,6 +208,9 @@
     <Compile Include="ViewModels\ViewUserSpaceViewModel.cs" />
     <Compile Include="ViewModels\ViewVideoDetailViewModel.cs" />
     <Compile Include="ViewModels\Settings\ViewVideoViewModel.cs" />
+    <Compile Include="Views\Dialogs\ViewAlertDialog.xaml.cs">
+      <DependentUpon>ViewAlertDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Dialogs\ViewDownloadSetter.xaml.cs">
       <DependentUpon>ViewDownloadSetter.xaml</DependentUpon>
     </Compile>
@@ -179,6 +222,12 @@
     </Compile>
     <Compile Include="Views\DownloadManager\ViewDownloading.xaml.cs">
       <DependentUpon>ViewDownloading.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Friends\ViewFollower.xaml.cs">
+      <DependentUpon>ViewFollower.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\Friends\ViewFollowing.xaml.cs">
+      <DependentUpon>ViewFollowing.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Settings\ViewAbout.xaml.cs">
       <DependentUpon>ViewAbout.xaml</DependentUpon>
@@ -210,14 +259,23 @@
     <Compile Include="Views\UserSpace\ViewArchive.xaml.cs">
       <DependentUpon>ViewArchive.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\UserSpace\ViewSeasonsSeries.xaml.cs">
+      <DependentUpon>ViewSeasonsSeries.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\UserSpace\ViewChannel.xaml.cs">
       <DependentUpon>ViewChannel.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ViewSeasonsSeries.xaml.cs">
+      <DependentUpon>ViewSeasonsSeries.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewChannel.xaml.cs">
       <DependentUpon>ViewChannel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewDownloadManager.xaml.cs">
       <DependentUpon>ViewDownloadManager.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\ViewFriends.xaml.cs">
+      <DependentUpon>ViewFriends.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ViewIndex.xaml.cs">
       <DependentUpon>ViewIndex.xaml</DependentUpon>
@@ -326,6 +384,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\Dialogs\ViewAlertDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\Dialogs\ViewDownloadSetter.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -339,6 +401,14 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\DownloadManager\ViewDownloading.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Friends\ViewFollower.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Friends\ViewFollowing.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -398,15 +468,27 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\UserSpace\ViewSeasonsSeries.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Views\UserSpace\ViewChannel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ViewSeasonsSeries.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Views\ViewChannel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\ViewDownloadManager.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ViewFriends.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -488,19 +570,18 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Prism.DryIoc" Version="8.1.97" />
-    <PackageReference Include="System.Data.SQLite.Core">
-      <Version>1.0.112.2</Version>
-    </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
+
+<ItemGroup>
     <Resource Include="Resources\favicon.ico" />
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\default_header.jpg" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Brotli.Core\Brotli.Core.csproj">
+      <Project>{3107CD63-E257-455E-AE81-1FD3582B067A}</Project>
+      <Name>Brotli.Core</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DownKyi.Core\DownKyi.Core.csproj">
       <Project>{4fde0364-f65b-4812-bfe8-34e886624fbd}</Project>
       <Name>DownKyi.Core</Name>
@@ -531,18 +612,6 @@
     <Resource Include="Resources\no-data.png" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="aria2c.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="aria2_COPYING.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="ffmpeg.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="FFmpeg_LICENSE.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Resource Include="Resources\checked.png" />
     <Resource Include="Resources\nodata02.png" />
     <Resource Include="Resources\backgound\9-绿荫秘境.png" />
@@ -567,7 +636,13 @@
     </Content>
   </ItemGroup>
   <ItemGroup />
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <PropertyGroup>
+    <TargetFrameworkDirectory Condition="'$(TargetFrameworkDirectory)'=='' and Exists('../../tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/mscorlib.dll')">../../tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/</TargetFrameworkDirectory>
+    <TargetFrameworkDirectory Condition="'$(TargetFrameworkDirectory)'=='' and Exists('$(NuGetPackageRoot)microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/mscorlib.dll')">$(NuGetPackageRoot)microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/</TargetFrameworkDirectory>
+  </PropertyGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.WinFX.targets" Condition="Exists('$(MSBuildToolsPath)\Microsoft.WinFX.targets')"/>
+  <Import Project="$(MSBuildToolsPath)\Sdks\Microsoft.NET.Sdk.WindowsDesktop\targets\Microsoft.WinFX.targets" Condition="Exists('$(MSBuildToolsPath)\Sdks\Microsoft.NET.Sdk.WindowsDesktop\targets\Microsoft.WinFX.targets')"/>
+<Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterCompile">
     <Exec Command="echo &quot;&quot;" />
   </Target>
