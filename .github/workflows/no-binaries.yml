@@ -1,0 +1,23 @@
+name: no-binaries
+# 防止把打包用的二进制 (exe/zip/nupkg 等) 再提交进仓库
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Block newly-added packaging binaries
+        run: |
+          BASE=$(git merge-base origin/main HEAD 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          ADDED=$(git diff --name-only --diff-filter=A "$BASE" HEAD)
+          BINS=$(printf "%s\n" "$ADDED" | grep -iE "\.(exe|dll|zip|nupkg|7z|rar|bin|so|dylib|pack|msi)$" || true)
+          if [ -n "$BINS" ]; then
+            echo "::error::Binary files added. Tools belong in the build-tools release, not the repo tree:"
+            printf "%s\n" "$BINS"
+            exit 1
+          fi
+          echo "OK: no new packaging binaries added."

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+  <!--
+    Reference assemblies for net472 when building with the .NET SDK (dotnet CLI),
+    on any OS. The condition keeps this invisible to nuget.exe (framework/mono MSBuild),
+    so its packages.config restore of the old-style projects stays pure:
+      - dotnet (core): restores the pack -> obj/nuget.g.* files exist (needed by the
+        SDK WinFX XAML markup-compile step on Windows) and the pack's targets point
+        TargetFrameworkRootPath at build/.NETFramework/v4.7.2 (fixes MSB3644 on Linux).
+      - nuget.exe (framework): no PackageReference -> packages.config is honored.
+  -->
+  <ItemGroup Condition="'$(MSBuildRuntimeType)' == 'core'">
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

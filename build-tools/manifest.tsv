@@ -1,0 +1,15 @@
+# Build-tools manifest — CI downloads from the network and verifies sha256.
+# No more static binaries in a GitHub release.
+# Columns (tab-separated): dest<TAB>url<TAB>sha256-of-download<TAB>zip-member(optional)
+#
+# ffmpeg.exe / FFmpeg_LICENSE.txt:
+#   leiurayer/FFmpeg-Builds, FFmpeg n5.0.1-4-ga5ebb3d25e (win32, static, GPL).
+#   Note: the original bundled build was dated 2022-05-08 and is no longer
+#   published upstream; this is the same FFmpeg source tag rebuilt by the
+#   same builder (2022-05-09), so behavior is identical.
+src/DownKyi.Core/ffmpeg.exe	https://github.com/leiurayer/FFmpeg-Builds/releases/download/autobuild-2022-05-09-05-28/ffmpeg-n5.0.1-4-ga5ebb3d25e-win32-gpl-5.0.zip	5504da4d4b9698ac066cf9415944ee2c45cf14315572c87d8a7581f824f15872	ffmpeg-n5.0.1-4-ga5ebb3d25e-win32-gpl-5.0/bin/ffmpeg.exe
+src/DownKyi.Core/FFmpeg_LICENSE.txt	https://github.com/leiurayer/FFmpeg-Builds/releases/download/autobuild-2022-05-09-05-28/ffmpeg-n5.0.1-4-ga5ebb3d25e-win32-gpl-5.0.zip	5504da4d4b9698ac066cf9415944ee2c45cf14315572c87d8a7581f824f15872	ffmpeg-n5.0.1-4-ga5ebb3d25e-win32-gpl-5.0/LICENSE.txt
+# aria2c.exe / aria2_COPYING.txt:
+#   official aria2 1.36.0 (win32 build1) — byte-identical to what was bundled before.
+src/DownKyi.Core/aria2c.exe	https://github.com/aria2/aria2/releases/download/release-1.36.0/aria2-1.36.0-win-32bit-build1.zip	c35a1bfa06726914006888929c6ce147e50b1d9fca8d1dc89bcd2c926f8c16de	aria2-1.36.0-win-32bit-build1/aria2c.exe
+src/DownKyi.Core/aria2_COPYING.txt	https://github.com/aria2/aria2/releases/download/release-1.36.0/aria2-1.36.0-win-32bit-build1.zip	c35a1bfa06726914006888929c6ce147e50b1d9fca8d1dc89bcd2c926f8c16de	aria2-1.36.0-win-32bit-build1/COPYING

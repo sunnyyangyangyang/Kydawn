@@ -1,0 +1,242 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*.*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag, e.g. v1.7.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - id: v
+        shell: bash
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            VER="${GITHUB_REF#refs/tags/}"
+          else
+            VER="${INPUT_VERSION:-dev}"
+          fi
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
+          echo "==> version: $VER"
+
+  build-windows:
+    needs: version
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch build tools (manifest-verified downloads)
+        shell: pwsh
+        run: python build-tools/fetch.py
+      - name: Fetch .NET Framework reference pack
+        shell: pwsh
+        run: |
+          $dir = "tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3"
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/microsoft.netframework.referenceassemblies.net472/1.0.3/microsoft.netframework.referenceassemblies.net472.1.0.3.nupkg" -OutFile "refpack.zip"
+          Expand-Archive -Path "refpack.zip" -DestinationPath $dir -Force
+          Remove-Item "refpack.zip"
+          if (-not (Test-Path "$dir/build/.NETFramework/v4.7.2/mscorlib.dll")) { throw "reference pack missing mscorlib.dll" }
+          Write-Host "refpack ready"
+      - name: NuGet restore (official nuget.exe)
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://dist.nuget.org/win-x86-commandline/latest/nuget.exe" -OutFile "nuget.exe"
+          Push-Location src
+          ../nuget.exe restore DownKyi.sln
+          Pop-Location
+      - name: Build (dotnet, Release x64)
+        shell: pwsh
+        run: dotnet build src/DownKyi.sln -c Release /p:Platform=x64 /v:minimal
+      - name: Stage win64 zip
+        shell: pwsh
+        run: |
+          $out = "src/DownKyi/bin/x64/Release"
+          Copy-Item "src/DownKyi.Core/ffmpeg.exe" "$out/ffmpeg.exe" -Force
+          Copy-Item "src/DownKyi.Core/aria2c.exe" "$out/aria2c.exe" -Force
+          $v = "${{ needs.version.outputs.version }}"
+          Compress-Archive -Path "$out/*" -DestinationPath "Kydawn-$v-win64.zip" -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: "Kydawn-${{ needs.version.outputs.version }}-win64.zip"
+
+  build-linux:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mono + packagers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mono-complete rpm dpkg-dev fakeroot unzip
+      - name: Fetch build tools (manifest-verified downloads)
+        run: python3 build-tools/fetch.py
+      - name: Fetch .NET Framework reference pack
+        run: |
+          mkdir -p tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3
+          curl -sSL -o /tmp/refpack.nupkg "https://api.nuget.org/v3-flatcontainer/microsoft.netframework.referenceassemblies.net472/1.0.3/microsoft.netframework.referenceassemblies.net472.1.0.3.nupkg"
+          unzip -q -o /tmp/refpack.nupkg -d tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/
+          test -f tools/refpack/microsoft.netframework.referenceassemblies.net472/1.0.3/build/.NETFramework/v4.7.2/mscorlib.dll
+          echo "refpack ready"
+      - name: Install nuget (official bootstrap, runs under mono)
+        run: |
+          curl -sSL -o nuget.exe https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+          mono nuget.exe help > /dev/null
+      - name: nuget restore
+        working-directory: src
+        run: mono ../nuget.exe restore DownKyi.sln
+      - name: Build (dotnet, Release x64)
+        run: dotnet build src/DownKyi.sln -c Release /p:Platform=x64 /v:minimal
+      - name: Stage linux bundle
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          out="src/DownKyi/bin/x64/Release"
+          mkdir -p linuxbundle
+          cp -r "$out/." linuxbundle/
+          cat > linuxbundle/run.sh <<RUN
+          #!/usr/bin/env bash
+          cd "$(dirname "$0")"
+          exec mono DownKyi.exe "$@"
+          RUN
+          chmod +x linuxbundle/run.sh
+      - name: Package .deb
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          core="${v#v}"
+          case "$core" in [0-9]*) ;; *) core="0.0.0-$core" ;; esac
+          d="debian/kydawn"
+          mkdir -p "$d/DEBIAN" "$d/usr/share/kydawn" "$d/usr/bin"
+          cp -r linuxbundle/. "$d/usr/share/kydawn/"
+          ln -sf /usr/share/kydawn/run.sh "$d/usr/bin/kydawn"
+          cat > "$d/DEBIAN/control" <<CTL
+          Package: kydawn
+          Version: $core
+          Section: utils
+          Architecture: amd64
+          Maintainer: kydawn
+          Description: Kydawn Bilibili downloader (Linux/Mono)
+          Depends: mono-runtime, libmono-wpf4.5-cil
+          CTL
+          dpkg-deb --build --root-owner-group "$d" "kydawn-${core}-amd64.deb"
+      - name: Package .rpm
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          core="${v#v}"
+          case "$core" in [0-9]*) ;; *) core="0.0.0$core" ;; esac
+          r="root/rpmbuild"
+          mkdir -p "$r"/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS}
+          cp -r linuxbundle "$r/SOURCES/app"
+          cat > "$r/SPECS/kydawn.spec" <<SPEC
+          Name: kydawn
+          Version: $core
+          Release: 1%{?dist}
+          Summary: Kydawn Bilibili downloader (Linux/Mono)
+          License: MIT
+          URL: https://github.com/sunnyyangyangyang/Kydawn
+          BuildArch: x86_64
+          %description
+          Kydawn Bilibili media downloader, Linux/Mono build.
+          %install
+          mkdir -p %{buildroot}/usr/bin %{buildroot}/usr/share/kydawn
+          cp -r %{_sourcedir}/app/. %{buildroot}/usr/share/kydawn/
+          ln -sf /usr/share/kydawn/run.sh %{buildroot}/usr/bin/kydawn
+          %files
+          /usr/share/kydawn
+          /usr/bin/kydawn
+          SPEC
+          rpmbuild -bb --define "_topdir $PWD/$r" "$r/SPECS/kydawn.spec" || true
+          cp "$r"/RPMS/*/kydawn-*.rpm . 2>/dev/null || echo "(rpm not produced)"
+      - name: Package AppImage
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.tar.xz || { echo "linuxdeploy download failed (network?)"; exit 0; }
+          tar xf linuxdeploy-x86_64.tar.xz || { echo "linuxdeploy extract failed"; exit 0; }
+          wget -q https://github.com/linuxdeploy/linuxdeploy-plugins/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.tar.xz || { echo "appimage plugin download failed (network?)"; exit 0; }
+          tar xf linuxdeploy-plugin-appimage-x86_64.tar.xz || { echo "appimage plugin extract failed"; exit 0; }
+          cp linuxdeploy-plugin-appimage-x86_64.tar.xz AppImagePlugin.tar.xz 2>/dev/null || true
+          mkdir -p AppDir/usr/share/kydawn AppDir/usr/bin
+          cp -r linuxbundle/. AppDir/usr/share/kydawn/
+          ln -sf /usr/share/kydawn/run.sh AppDir/usr/bin/kydawn
+          # printf instead of heredoc: heredoc terminators broke inside the old
+          # subshell indentation (YAML block scalar keeps them indented)
+          printf '%s\n' '#!/bin/sh' 'exec "$APPDIR/usr/bin/kydawn" "$@"' > AppDir/AppRun
+          chmod +x AppDir/AppRun
+          printf '%s\n' '[Desktop Entry]' 'Name=Kydawn' 'Exec=kydawn' 'Type=Application' > AppDir/kydawn.desktop
+          echo kydawn > AppDir/kydawn
+          ./linuxdeploy-x86_64 -i AppImagePlugin.tar.xz AppDir 2>&1 | tail -15 || echo "appimage best-effort"
+          ls -la *.AppImage 2>/dev/null || echo "(no AppImage produced)"
+      - name: Package Arch (PKGBUILD)
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          ver="${v#v}"
+          case "$ver" in [0-9]*) ;; *) ver="0.0.0$ver" ;; esac
+          mkdir -p arch
+          cat > arch/PKGBUILD <<PKG
+          pkgname=kydawn
+          pkgver=$ver
+          pkgrel=1
+          pkgdesc="Kydawn Bilibili downloader (Linux/Mono)"
+          arch=(x86_64)
+          url="https://github.com/sunnyyangyangyang/Kydawn"
+          license=(MIT)
+          depends=(mono-runtime libmono-wpf4.5-cil)
+          source=(kydawn-linux.tar.xz)
+          package() {
+            mkdir -p \${pkgdir}/usr/share/kydawn
+            cp -r kydawn-linux/. \${pkgdir}/usr/share/kydawn/
+            ln -sf /usr/share/kydawn/run.sh \${pkgdir}/usr/bin/kydawn
+          }
+          PKG
+          tar cJf "kydawn-${ver}-linux.tar.xz" -C linuxbundle .
+          tar cJf "kydawn-${ver}-arch.tar.xz" -C arch .
+      - name: Collect linux artifacts
+        run: |
+          mkdir -p out
+          cp ./*.deb out/ 2>/dev/null || true
+          cp ./*.rpm out/ 2>/dev/null || true
+          cp ./*.AppImage out/ 2>/dev/null || true
+          cp kydawn-*-linux.tar.xz out/ 2>/dev/null || true
+          cp kydawn-*-arch.tar.xz out/ 2>/dev/null || true
+          cp arch/PKGBUILD out/PKGBUILD 2>/dev/null || true
+          ls -la out/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          path: out/
+
+  release:
+    needs: [version, build-windows, build-linux]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: art/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: linux
+          path: art/linux
+      - name: List artifacts
+        run: find art -type f | sort
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          v="${{ needs.version.outputs.version }}"
+          files=$(find art -type f -printf "art/%P\n")
+          draft=""
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then draft="--draft"; fi
+          gh release create "$v" $files --repo "$GITHUB_REPOSITORY" --title "$v" --target main $draft --generate-notes 2>&1 | tail -4 || gh release upload "$v" $files --clobber --repo "$GITHUB_REPOSITORY" 2>&1 | tail -4
