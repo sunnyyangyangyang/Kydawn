@@ -7,6 +7,7 @@ using DownKyi.Core.Utils;
 using DownKyi.Models;
 using DownKyi.Utils;
 using DownKyi.ViewModels.DownloadManager;
+using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -19,7 +20,10 @@ namespace DownKyi.Services.Download
 {
     public class BuiltinDownloadService : DownloadService, IDownloadService
     {
-        public BuiltinDownloadService(ObservableCollection<DownloadingItem> downloadingList, ObservableCollection<DownloadedItem> downloadedList) : base(downloadingList, downloadedList)
+        public BuiltinDownloadService(ObservableCollection<DownloadingItem> downloadingList, 
+            ObservableCollection<DownloadedItem> downloadedList,
+            IDialogService dialogService
+            ) : base(downloadingList, downloadedList, dialogService)
         {
             Tag = "BuiltinDownloadService";
         }
@@ -134,15 +138,25 @@ namespace DownKyi.Services.Download
             }
 
             // 开始下载
-            var downloadStatus = DownloadByBuiltin(downloading, urls, path, fileName);
-            if (downloadStatus)
+            try
             {
-                downloading.Downloading.DownloadedFiles.Add(key);
-                downloading.Downloading.Gid = null;
-                return Path.Combine(path, fileName);
+                var downloadStatus = DownloadByBuiltin(downloading, urls, path, fileName);
+                if (downloadStatus)
+                {
+                    downloading.Downloading.DownloadedFiles.Add(key);
+                    downloading.Downloading.Gid = null;
+                    return Path.Combine(path, fileName);
+                }
+                else
+                {
+                    return nullMark;
+                }
             }
-            else
+            catch (FileNotFoundException e)
             {
+                Core.Utils.Debugging.Console.PrintLine("BuiltinDownloadService.DownloadVideo()发生异常: {0}", e);
+                LogManager.Error("BuiltinDownloadService.DownloadVideo()", e);
+
                 return nullMark;
             }
         }
@@ -291,7 +305,7 @@ namespace DownKyi.Services.Download
                 mtd.Configure(req =>
                 {
                     req.CookieContainer = LoginHelper.GetLoginInfoCookies();
-                    req.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/97.0.4692.99 Safari/537.36";
+                    req.UserAgent = SettingsManager.GetInstance().GetUserAgent();
                     req.Referer = "https://www.bilibili.com";
                     req.Headers.Add("Origin", "https://www.bilibili.com");
 
@@ -356,7 +370,7 @@ namespace DownKyi.Services.Download
                 };
 
                 // 开始下载
-                mtd.StartAsync();
+                mtd.Start();
 
                 // 阻塞当前任务，监听暂停事件
                 while (!isComplete)

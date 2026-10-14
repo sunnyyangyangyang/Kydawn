@@ -56,7 +56,9 @@
     <system:String x:Key="AudioQuality">音质</system:String>
     <system:String x:Key="VideoQuality">画质</system:String>
     <system:String x:Key="VideoCodec">视频编码</system:String>
-
+    
+    <system:String x:Key="Search">搜索</system:String>
+    <system:String x:Key="SearchVideoByName">搜索视频名称</system:String>
     <system:String x:Key="SelectAll">全选</system:String>
     <system:String x:Key="Parse">解析</system:String>
     <system:String x:Key="ParseVideo">解析视频</system:String>
@@ -65,7 +67,7 @@
     <!--  DownloadManager  -->
     <system:String x:Key="Downloading">正在下载</system:String>
     <system:String x:Key="DownloadFinished">已下载</system:String>
-
+    <system:String x:Key="DownloadSuccess">下载完成</system:String>
     <!--  Settings  -->
     <system:String x:Key="PressEnterToApplySettingTip">按回车键应用设置</system:String>
 

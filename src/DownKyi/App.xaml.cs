@@ -15,7 +15,9 @@ using DownKyi.Views.Friends;
 using DownKyi.Views.Settings;
 using DownKyi.Views.Toolbox;
 using DownKyi.Views.UserSpace;
+using Prism.DryIoc;
 using Prism.Ioc;
+using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -129,19 +131,16 @@ namespace DownKyi
                 case Downloader.NOT_SET:
                     break;
                 case Downloader.BUILT_IN:
-                    downloadService = new BuiltinDownloadService(DownloadingList, DownloadedList);
+                    downloadService = new BuiltinDownloadService(DownloadingList, DownloadedList, (IDialogService)Container.GetContainer().GetService(typeof(IDialogService)));
                     break;
                 case Downloader.ARIA:
-                    downloadService = new AriaDownloadService(DownloadingList, DownloadedList);
+                    downloadService = new AriaDownloadService(DownloadingList, DownloadedList, (IDialogService)Container.GetContainer().GetService(typeof(IDialogService)));
                     break;
                 case Downloader.CUSTOM_ARIA:
-                    downloadService = new CustomAriaDownloadService(DownloadingList, DownloadedList);
+                    downloadService = new CustomAriaDownloadService(DownloadingList, DownloadedList, (IDialogService)Container.GetContainer().GetService(typeof(IDialogService)));
                     break;
             }
-            if (downloadService != null)
-            {
-                downloadService.Start();
-            }
+            downloadService?.Start();
 
             return Container.Resolve<MainWindow>();
         }

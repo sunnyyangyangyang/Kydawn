@@ -86,6 +86,8 @@ namespace DownKyi.Services
 
                 // 时长
                 page.Duration = Format.FormatDuration(playUrl.Dash.Duration);
+
+                return;
             }
         }
 
@@ -98,6 +100,7 @@ namespace DownKyi.Services
         private static ObservableCollection<string> GetAudioQualityFormatList(PlayUrl playUrl, int defaultAudioQuality)
         {
             List<string> audioQualityFormatList = new List<string>();
+            List<string> sortList = new List<string>();
             List<Quality> audioQualities = Constant.GetAudioQualities();
 
             if (playUrl.Dash.Audio != null && playUrl.Dash.Audio.Count > 0)
@@ -131,10 +134,19 @@ namespace DownKyi.Services
                 }
             }
 
-            audioQualityFormatList.Sort(new StringLogicalComparer<string>());
-            audioQualityFormatList.Reverse();
+            //audioQualityFormatList.Sort(new StringLogicalComparer<string>());
+            //audioQualityFormatList.Reverse();
 
-            return new ObservableCollection<string>(audioQualityFormatList);
+            foreach (var item in audioQualities)
+            {
+                if (audioQualityFormatList.Contains(item.Name))
+                {
+                    sortList.Add(item.Name);
+                }
+            }
+            sortList.Reverse();
+
+            return new ObservableCollection<string>(sortList);
         }
 
         /// <summary>
@@ -230,6 +242,17 @@ namespace DownKyi.Services
                         {
                             break;
                         }
+                    }
+
+                    // 若默认编码为AVC，但画质为杜比视界时，
+                    // 上面的foreach不会选中HEVC编码，
+                    // 而杜比视界只有HEVC编码，
+                    // 因此这里再判断并设置一次
+                    if (videoQualityList[videoQualityList.IndexOf(selectedVideoQuality)].SelectedVideoCodec == null &&
+                        videoQualityList[videoQualityList.IndexOf(selectedVideoQuality)].VideoCodecList.Count() > 0)
+                    {
+                        videoQualityList[videoQualityList.IndexOf(selectedVideoQuality)].SelectedVideoCodec =
+                            videoQualityList[videoQualityList.IndexOf(selectedVideoQuality)].VideoCodecList[0];
                     }
                 }
 

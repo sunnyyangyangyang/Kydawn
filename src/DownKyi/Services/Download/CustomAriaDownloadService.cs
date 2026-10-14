@@ -9,6 +9,7 @@ using DownKyi.Core.Utils;
 using DownKyi.Models;
 using DownKyi.Utils;
 using DownKyi.ViewModels.DownloadManager;
+using Prism.Services.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -23,7 +24,10 @@ namespace DownKyi.Services.Download
     /// </summary>
     public class CustomAriaDownloadService : DownloadService, IDownloadService
     {
-        public CustomAriaDownloadService(ObservableCollection<DownloadingItem> downloadingList, ObservableCollection<DownloadedItem> downloadedList) : base(downloadingList, downloadedList)
+        public CustomAriaDownloadService(ObservableCollection<DownloadingItem> downloadingList,
+            ObservableCollection<DownloadedItem> downloadedList,
+            IDialogService dialogService
+            ) : base(downloadingList, downloadedList, dialogService)
         {
             Tag = "AriaDownloadService";
         }
@@ -347,7 +351,7 @@ namespace DownKyi.Services.Download
                     Out = localFileName,
                     //Header = $"cookie: {LoginHelper.GetLoginInfoCookiesString()}\nreferer: https://www.bilibili.com",
                     //UseHead = "true",
-                    UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.54 Safari/537.36",
+                    UserAgent = SettingsManager.GetInstance().GetUserAgent(),
                 };
 
                 //// 如果设置了代理，则增加HttpProxy
