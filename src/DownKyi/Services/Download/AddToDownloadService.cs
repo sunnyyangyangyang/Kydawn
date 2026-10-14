@@ -194,7 +194,16 @@ namespace DownKyi.Services.Download
             // 下载设置dialog中如果点击取消或者关闭窗口，
             // 会返回空字符串，
             // 这时直接退出
-            if (directory == null || directory == string.Empty) { return null; }
+            if (string.IsNullOrEmpty(directory)) { return null; }
+
+            if (!Directory.Exists(Directory.GetDirectoryRoot(directory)))
+            {
+                var alert = new AlertService(dialogService);
+                alert.ShowError(DictionaryResource.GetString("DriveNotFound"));
+
+                directory = string.Empty;
+            }
+
 
             // 文件夹不存在则创建
             if (!Directory.Exists(directory))
@@ -212,7 +221,7 @@ namespace DownKyi.Services.Download
         /// <param name="directory">下载路径</param>
         /// <param name="isAll">是否下载所有，包括未选中项</param>
         /// <returns>添加的数量</returns>
-        public int AddToDownload(IEventAggregator eventAggregator, string directory, bool isAll = false)
+        public int AddToDownload(IEventAggregator eventAggregator, IDialogService dialogService, string directory, bool isAll = false)
         {
             if (directory == null || directory == string.Empty) { return -1; }
             if (videoSections == null) { return -1; }
@@ -268,8 +277,25 @@ namespace DownKyi.Services.Download
 
                         if (item.DownloadBase.Cid == page.Cid && item.Resolution.Id == page.VideoQuality.Quality && item.AudioCodec.Name == page.AudioQualityFormat && item.VideoCodecName == page.VideoQuality.SelectedVideoCodec)
                         {
-                            eventAggregator.GetEvent<MessageEvent>().Publish($"{page.Name}{DictionaryResource.GetString("TipAlreadyToAddDownloaded")}");
-                            isDownloaded = true;
+                            //eventAggregator.GetEvent<MessageEvent>().Publish($"{page.Name}{DictionaryResource.GetString("TipAlreadyToAddDownloaded")}");
+                            //isDownloaded = true;
+
+                            AlertService alertService = new AlertService(dialogService);
+                            ButtonResult result = alertService.ShowInfo(DictionaryResource.GetString("TipAlreadyToAddDownloaded2"));
+                            if (result == ButtonResult.OK)
+                            {
+                                App.PropertyChangeAsync(() =>
+                                {
+                                    App.DownloadedList.Remove(item);
+                                });
+
+                                isDownloaded = false;
+                            }
+                            else
+                            {
+                                isDownloaded = true;
+                            }
+
                             break;
                         }
                     }
@@ -304,14 +330,14 @@ namespace DownKyi.Services.Download
 
                     // 文件路径
                     List<FileNamePart> fileNameParts = SettingsManager.GetInstance().GetFileNameParts();
-                    FileName fileName = FileName.Builder(fileNameParts)                        
+                    FileName fileName = FileName.Builder(fileNameParts)
                         .SetSection(Format.FormatFileName(sectionName))
                         .SetMainTitle(Format.FormatFileName(videoInfoView.Title))
                         .SetPageTitle(Format.FormatFileName(page.Name))
                         .SetVideoZone(videoInfoView.VideoZone.Split('>')[0])
                         .SetAudioQuality(page.AudioQualityFormat)
                         .SetVideoQuality(page.VideoQuality == null ? "" : page.VideoQuality.QualityFormat)
-                        .SetVideoCodec(page.VideoQuality == null ? "" : page.VideoQuality.SelectedVideoCodec.Contains("AVC") ? "AVC" : page.VideoQuality.SelectedVideoCodec.Contains("HEVC") ? "HEVC" : page.VideoQuality.SelectedVideoCodec.Contains("Dolby") ? "Dolby Vision" : "")
+                        .SetVideoCodec(page.VideoQuality == null ? "" : page.VideoQuality.SelectedVideoCodec.Contains("AVC") ? "AVC" : page.VideoQuality.SelectedVideoCodec.Contains("HEVC") ? "HEVC" : page.VideoQuality.SelectedVideoCodec.Contains("Dolby") ? "Dolby Vision" : page.VideoQuality.SelectedVideoCodec.Contains("AV1") ? "AV1" : "")
                         .SetVideoPublishTime(page.PublishTime)
                         .SetAvid(page.Avid)
                         .SetBvid(page.Bvid)

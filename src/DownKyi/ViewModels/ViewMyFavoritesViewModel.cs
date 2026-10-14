@@ -26,7 +26,7 @@ namespace DownKyi.ViewModels
     {
         public const string Tag = "PageMyFavorites";
 
-        private readonly IDialogService dialogService;
+        //private readonly IDialogService dialogService;
 
         private CancellationTokenSource tokenSource1;
         private CancellationTokenSource tokenSource2;
@@ -86,7 +86,6 @@ namespace DownKyi.ViewModels
             get => mediaContentVisibility;
             set => SetProperty(ref mediaContentVisibility, value);
         }
-
 
         private Visibility mediaLoadingVisibility;
         public Visibility MediaLoadingVisibility
@@ -379,7 +378,7 @@ namespace DownKyi.ViewModels
                     addToDownloadService.GetVideo();
                     addToDownloadService.ParseVideo(videoInfoService);
                     // 下载
-                    i += addToDownloadService.AddToDownload(eventAggregator, directory);
+                    i += addToDownloadService.AddToDownload(eventAggregator, dialogService, directory);
                 }
             });
 
@@ -477,7 +476,7 @@ namespace DownKyi.ViewModels
         }
 
         /// <summary>
-        /// 导航到VideoDetail页面时执行
+        /// 导航到页面时执行
         /// </summary>
         /// <param name="navigationContext"></param>
         public override async void OnNavigatedTo(NavigationContext navigationContext)

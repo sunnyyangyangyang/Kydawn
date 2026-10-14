@@ -29,8 +29,6 @@ namespace DownKyi.ViewModels
     {
         public const string Tag = "PagePublication";
 
-        private readonly IDialogService dialogService;
-
         private CancellationTokenSource tokenSource;
 
         private long mid = -1;
@@ -334,7 +332,7 @@ namespace DownKyi.ViewModels
                     addToDownloadService.GetVideo();
                     addToDownloadService.ParseVideo(videoInfoService);
                     // 下载
-                    i += addToDownloadService.AddToDownload(eventAggregator, directory);
+                    i += addToDownloadService.AddToDownload(eventAggregator, dialogService, directory);
                 }
             });
 
@@ -487,7 +485,7 @@ namespace DownKyi.ViewModels
         }
 
         /// <summary>
-        /// 导航到VideoDetail页面时执行
+        /// 导航到页面时执行
         /// </summary>
         /// <param name="navigationContext"></param>
         public override void OnNavigatedTo(NavigationContext navigationContext)

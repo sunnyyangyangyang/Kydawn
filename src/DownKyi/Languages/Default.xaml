@@ -63,6 +63,7 @@
     <system:String x:Key="AllPublicationZones">全部</system:String>
     <system:String x:Key="Publication">投稿视频</system:String>
     <system:String x:Key="Channel">频道</system:String>
+    <system:String x:Key="SeasonsSeries">合集和列表</system:String>
     <system:String x:Key="UserSpaceWait">请稍等，马上就好~</system:String>
 
     <!--  PublicFavorites  -->
@@ -96,6 +97,17 @@
     <system:String x:Key="DownloadAllPublication">下载全部</system:String>
     <system:String x:Key="PublicationWait">请稍等，马上就好~</system:String>
 
+    <!--  Friend  -->
+    <system:String x:Key="Friend">好友</system:String>
+    <system:String x:Key="FriendFollowing">关注</system:String>
+    <system:String x:Key="FriendFollower">粉丝</system:String>
+
+    <system:String x:Key="FollowingWait">请稍等，马上就好~</system:String>
+    <system:String x:Key="FollowerWait">请稍等，马上就好~</system:String>
+
+    <system:String x:Key="AllFollowing">全部关注</system:String>
+    <system:String x:Key="WhisperFollowing">悄悄关注</system:String>
+
     <!--  VideoDetail  -->
     <system:String x:Key="CopyCover">复制封面图片</system:String>
     <system:String x:Key="CopyCoverUrl">复制封面URL</system:String>
@@ -123,6 +135,8 @@
     <system:String x:Key="VideoCodec">视频编码</system:String>
 
     <system:String x:Key="SelectAll">全选</system:String>
+    <system:String x:Key="Search">搜索</system:String>
+    <system:String x:Key="SearchVideoByName">搜索视频名称</system:String>
     <system:String x:Key="Parse">解析</system:String>
     <system:String x:Key="ParseVideo">解析视频</system:String>
     <system:String x:Key="DownloadSelected">下载选中项</system:String>
@@ -130,14 +144,15 @@
 
     <system:String x:Key="TipAlreadyToAddDownloading">已经添加到下载列表~</system:String>
     <system:String x:Key="TipAlreadyToAddDownloaded">已经下载完成~</system:String>
-    <system:String x:Key="TipAddDownloadingZero">没有选中项符合下载要求！</system:String>
+    <system:String x:Key="TipAlreadyToAddDownloaded2">该视频已经下载完成，是否重新下载？</system:String>
+    <system:String x:Key="TipAddDownloadingZero">没有添加任何视频~</system:String>
     <system:String x:Key="TipAddDownloadingFinished1">成功添加了</system:String>
     <system:String x:Key="TipAddDownloadingFinished2">项~</system:String>
 
     <!--  DownloadManager  -->
     <system:String x:Key="Downloading">正在下载</system:String>
     <system:String x:Key="DownloadFinished">已下载</system:String>
-
+    <system:String x:Key="DownloadSuccess">下载完成</system:String>
     <system:String x:Key="DownloadingAudio">音频</system:String>
     <system:String x:Key="DownloadingVideo">视频</system:String>
     <system:String x:Key="DownloadingDanmaku">弹幕</system:String>
@@ -184,10 +199,14 @@
 
     <system:String x:Key="Network">网络</system:String>
     <system:String x:Key="UseSSL">启用https（若下载器提示SSL错误，则关闭此项）</system:String>
+    <system:String x:Key="UserAgent">UserAgent：</system:String>
     <system:String x:Key="SelectDownloader">选择下载器（重启生效）：</system:String>
-    <system:String x:Key="BuiltinDownloader">内建下载器（测试）</system:String>
+    <system:String x:Key="BuiltinDownloader">内建下载器</system:String>
     <system:String x:Key="Aria2cDownloader">Aria2下载器</system:String>
+    <system:String x:Key="CustomAria2cDownloader">自定义Aria2下载器</system:String>
+    <system:String x:Key="AriaServerHost">Aria服务器地址：</system:String>
     <system:String x:Key="AriaServerPort">Aria服务器端口：</system:String>
+    <system:String x:Key="AriaServerToken">Aria服务器Token：</system:String>
     <system:String x:Key="AriaLogLevel">Aria日志等级：</system:String>
     <system:String x:Key="AriaMaxConcurrentDownloads">Aria同时下载数：</system:String>
     <system:String x:Key="AriaSplit">Aria最大线程数：</system:String>
@@ -310,6 +329,8 @@
     <system:String x:Key="ConfirmDelete">您确定要删除吗？</system:String>
     <system:String x:Key="SelectDirectory">请选择文件夹</system:String>
 
+    <system:String x:Key="DirectoryError">路径错误！</system:String>
+
     <!--  ViewDownloadSetter  -->
     <system:String x:Key="DownloadSetter">下载设置</system:String>
     <system:String x:Key="Location">位置：</system:String>
@@ -327,6 +348,7 @@
     <system:String x:Key="IsDefaultDownloadDirectoryTip">选中后下次将不会弹出此窗口</system:String>
     <system:String x:Key="Download">下载</system:String>
     <system:String x:Key="WarningNullDirectory">文件夹路径不能为空</system:String>
+    <system:String x:Key="DriveNotFound">该磁盘不存在</system:String>
 
     <!--  ViewParsingSelector  -->
     <system:String x:Key="ParsingSelector">选择解析项</system:String>
