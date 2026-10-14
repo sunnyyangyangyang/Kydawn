@@ -1,0 +1,9 @@
+.work/
+.migration-backup/
+.ci-experiment/
+.ci-logs/
+src/packages/
+src/DownKyi/bin/
+src/DownKyi/obj/
+src/DownKyi.Core/bin/
+src/DownKyi.Core/obj/
